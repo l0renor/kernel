@@ -10,36 +10,11 @@ void run(void);
 void Task1(void);
 void Task2(void);
 
-TCB *ptr_tcbForTaskOne, *ptr_tcbForTaskTwo, *RunningTask;
+TCB *RunningTask;
 
 // void (*taskPointer)(void);
 
 void TimerInt(void);
-
-void Task1(void)
-{
-    unsigned int j;
-    j = 0;
-
-    while(1)
-    {
-        j++;
-        j--;
-        //SaveContext();
-    }
-}
-
-void Task2(void)
-{
-    unsigned int k;
-    k = 0;
-    while(1)
-    {
-        k++;
-        //SaveContext();
-        k--;
-    }
-}
 
 void run(void)
 {
