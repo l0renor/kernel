@@ -75,6 +75,8 @@ exception create_task( void(* body)(), uint d )
   }
   //Return status
   return FAIL;
+  
+  
 }
 void idle_function(void){
     while(1){}
@@ -116,4 +118,72 @@ void TimerInt(void)
     ticks = ticks + 1;
   }
 }
+void insertionSort(list* listToSort) 
+{ 
+   
+    struct Node* sorted = NULL; 
+    
+    // Traverse the given doubly linked list and 
+    // insert every node to 'sorted' 
+    struct Node* current = *head_ref; 
+    while (current != NULL) { 
+  
+        // Store next for next iteration 
+        struct Node* next = current->next; 
+  
+        // removing all the links so as to create 'current' 
+        // as a new node for insertion 
+        current->prev = current->next = NULL; 
+  
+        // insert current in 'sorted' doubly linked list 
+        sortedInsert(&sorted, current); 
+  
+        // Update current 
+        current = next; 
+    } 
+  
+    // Update head_ref to point to sorted doubly linked list 
+    *head_ref = sorted; 
+} 
+void sortedInsert(list* sortedList, listobj* newNode)
+{ 
+    struct Node* current;
+    
+    listobj *head_ref = sortedList->*pHead;
+    
+  
+    // if list is empty 
+    if (*head_ref->pTask == NULL) 
+        *head_ref -> = newNode; 
+  
+    // if the node is to be inserted at the beginning 
+    // of the doubly linked list 
+    else if ((*head_ref)->data >= newNode->data) { 
+        newNode->next = *head_ref; 
+        newNode->next->prev = newNode; 
+        *head_ref = newNode; 
+    } 
+  
+    else { 
+        current = *head_ref; 
+  
+        // locate the node after which the new node 
+        // is to be inserted 
+        while (current->next != NULL &&  
+               current->next->data < newNode->data) 
+            current = current->next; 
+  
+        /*Make the appropriate links */
+  
+        newNode->next = current->next; 
+  
+        // if the new node is not inserted 
+        // at the end of the list 
+        if (current->next != NULL) 
+            newNode->next->prev = newNode; 
+  
+        current->next = newNode; 
+        newNode->prev = current; 
+    } 
+} 
 
