@@ -13,26 +13,6 @@ list *sleepList;
 
 void run(void);
 
-list * createList(){
-  list *newList =  calloc(1,sizeof(list));
-  newList->pHead = calloc(1,sizeof(listobj));
-  newList->pTail = calloc(1,sizeof(listobj));
-  //Head
-  newList->pHead->pTask = NULL;
-  newList->pHead->nTCnt = 0;
-  newList->pHead->pMessage = NULL;
-  newList->pHead->pPrevious = NULL;
-  newList->pHead->pNext = newList->pTail;
-  //Tail
-  newList->pTail->pTask = NULL;
-  newList->pTail->nTCnt = 0;
-  newList->pTail->pMessage = NULL;
-  newList->pTail->pPrevious = newList->pHead;
-  newList->pTail->pNext = NULL;
-  return newList;
-}
-
-
 exception create_task( void(* body)(), uint d )
 {
   //Allocate memory for TCB
@@ -80,25 +60,23 @@ exception create_task( void(* body)(), uint d )
   
   
 }
-void idle_function(void){
-    while(1){}
-  }
+
 exception init_kernel(void){
   exception result = OK;
   in_startup = TRUE;
   TimerInt();
   isr_off();
-  list *readyList = createList();
+  list *readyList = create_list();
   if(readyList == NULL){
-  result = FAIL;
+    result = FAIL;
   }
-  list *blockedList =  createList();
+  list *blockedList =  create_list();
   if(blockedList == NULL){
-  result = FAIL;
+    result = FAIL;
   }
-  list *sleepList =  createList();
+  list *sleepList =  create_list();
   if(blockedList == NULL){
-  result = FAIL;
+    result = FAIL;
   }
   isr_on();
   
@@ -120,32 +98,34 @@ void TimerInt(void)
     ticks = ticks + 1;
   }
 }
-void insertionSort(list* listToSort) 
+
+void insertionSort(list* l) 
 { 
    
-    struct Node* sorted = NULL; 
+    list* sorted = create_list(); 
     
     // Traverse the given doubly linked list and 
     // insert every node to 'sorted' 
-    struct Node* current = *head_ref; 
-    while (current != NULL) { 
+    listobj* current = l->pHead->pNext; 
+    l->pHead->pNext = NULL;
+    while (current->pTask != NULL) { 
   
         // Store next for next iteration 
-        struct Node* next = current->next; 
+        listobj* next = current->pNext; 
   
         // removing all the links so as to create 'current' 
         // as a new node for insertion 
-        current->prev = current->next = NULL; 
+        current->pPrevious = current->pNext = NULL;
   
         // insert current in 'sorted' doubly linked list 
-        sortedInsert(&sorted, current); 
+        sortedInsert(sorted, current); 
   
         // Update current 
         current = next; 
     } 
   
     // Update head_ref to point to sorted doubly linked list 
-    *head_ref = sorted; 
+    l = sorted; 
 } 
 void sortedInsert(list* sortedList, listobj* newNode)
 { 
@@ -194,11 +174,38 @@ void sortedInsert(list* sortedList, listobj* newNode)
     } 
 } 
 
-static void add_to_list(list* l, listobj* o) {
+static list* create_list( void ) {
+  list *newList =  calloc(1,sizeof(list));
+  newList->pHead = calloc(1,sizeof(listobj));
+  newList->pTail = calloc(1,sizeof(listobj));
+  //Head
+  newList->pHead->pTask = NULL;
+  newList->pHead->nTCnt = 0;
+  newList->pHead->pMessage = NULL;
+  newList->pHead->pPrevious = NULL;
+  newList->pHead->pNext = newList->pTail;
+  //Tail
+  newList->pTail->pTask = NULL;
+  newList->pTail->nTCnt = 0;
+  newList->pTail->pMessage = NULL;
+  newList->pTail->pPrevious = newList->pHead;
+  newList->pTail->pNext = NULL;
+  return newList;
+}
+
+static void idle_function(void){
+    while(1)
+    {
+      //Nothing
+    }
+}
+
+static void add_to_list( list* l, listobj* o ) {
   listobj* last = l->pTail->pPrevious;
   last->pNext = o;
   o->pPrevious =last;
   o->pNext = l->pTail;
   l->pTail->pPrevious = o;
 }
+
 
