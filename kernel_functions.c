@@ -11,10 +11,6 @@ list *readyList;
 list *blockedList; 
 list *sleepList;
 
-exception create_task(void(*task_body)(), uint deadline);
-
-void run(void);
-
 *list createList(){
   list *readyList =  calloc(1,sizeof(list));
   list ->pHead = calloc(1,sizeof(l_obj));
@@ -34,9 +30,8 @@ void run(void);
   return list;
 }
 
-void TimerInt(void);
 
-exception create_task(void(*task_body)(), uint deadline)
+exception create_task( void(* body)(), uint d )
 {
   //Allocate memory for TCB
   isr_off(); /* protextion of calloc */
@@ -47,23 +42,24 @@ exception create_task(void(*task_body)(), uint deadline)
   }
   
   //Set deadline in TCB
-  ptr_tcb->DeadLine = deadline;
+  ptr_tcb->DeadLine = d;
   
   //Set the TCB's PC to point to the task body
-  ptr_tcb->PC = task_body;
+  ptr_tcb->PC = body;
   
   //Set TCB's SP to point to the stack segment
   //First element on stack is omitted for safety reasons
   ptr_tcb->StackSeg[STACK_SIZE-2] = 0x21000000; /* PSR */
-  ptr_tcb->StackSeg[STACK_SIZE-3] = (uint)task_body; /* PC */
+  ptr_tcb->StackSeg[STACK_SIZE-3] = (uint)body; /* PC */
   ptr_tcb->StackSeg[STACK_SIZE-4] = 0; /* LR */
   //Skip some Stack elements for r12, r3, r2, r1, r0.
   ptr_tcb->SP = &( ptr_tcb->StackSeg[STACK_SIZE-9] );
     
   //IF start-up mode THEN
   if ( in_startup )
+  {
     //Insert new task in Readylist
-    
+    p 
     //Return status
   //ELSE
     //Disable interrupts
@@ -74,14 +70,9 @@ exception create_task(void(*task_body)(), uint deadline)
       //Load Context
     //ENDIF
   //ENDIF
+  }
   //Return status
   return FAIL;
-}
-
-void run(void)
-{
-  RunningTask = ptr_tcbForTaskOne;
-  LoadContext();
 }
 
 exception init_kernel(void){
@@ -98,17 +89,3 @@ exception init_kernel(void){
   
 }
 
-
-void TimerInt(void)
-{
-  static unsigned int ticks, first = 1;
-  if (first == 1) 
-  {
-    first = 0; 
-    ticks = 1;
-  }
-  else 
-  {
-    ticks = ticks + 1;
-  }
-}
