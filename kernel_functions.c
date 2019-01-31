@@ -5,11 +5,9 @@ extern void LoadContext(void);
 extern void SelectPSP(void);
 extern void __get_PSP_from_TCB(void);
 
-TCB *RunningTask;
-bool in_startup;
-list *readyList;
-list *blockedList; 
-list *sleepList;
+TCB     *RunningTask;
+bool    in_startup;
+list*   ready_list, blocked_list, sleep_list;
 
 void run(void);
 
@@ -41,9 +39,9 @@ exception create_task( void(* body)(), uint d )
   if ( in_startup )
   {
     //Create ListObj for TCB
-    
+    lo = create_listobj(pTCB);
     //Insert new task in Readylist
-    
+    sortedInsert(ready
     
     //Return status
     //ELSE
@@ -67,16 +65,16 @@ exception init_kernel(void){
   in_startup = TRUE;
   TimerInt();
   isr_off();
-  list *readyList = create_list();
-  if(readyList == NULL){
+  list *ready_list = create_list();
+  if(ready_list == NULL){
     result = FAIL;
   }
-  list *blockedList =  create_list();
-  if(blockedList == NULL){
+  list *blocked_list =  create_list();
+  if(blocked_list == NULL){
     result = FAIL;
   }
-  list *sleepList =  create_list();
-  if(blockedList == NULL){
+  list *sleep_list =  create_list();
+  if(blocked_list == NULL){
     result = FAIL;
   }
   isr_on();
@@ -100,7 +98,7 @@ void TimerInt(void)
   }
 }
 
-void insertionSort(list* l) 
+void insertion_sort(list* l) 
 { 
   list* sorted = create_list(); 
   listobj* current = l->pHead->pNext; 
@@ -109,7 +107,7 @@ void insertionSort(list* l)
   {   
     listobj* next = current->pNext; 
     current->pPrevious = current->pNext = NULL;
-    sortedInsert(sorted, current); 
+    sorted_insert(sorted, current); 
     current = next; 
   }  
   //@TODO: Free memory space taken by original l
@@ -117,7 +115,7 @@ void insertionSort(list* l)
 } 
 
 // Only call if l is already sorted!
-void sortedInsert(list* l, listobj* o)
+void sorted_insert(list* l, listobj* o)
 { 
   listobj* current;
   listobj* first = l->pHead->pNext; /* skip head */
