@@ -120,6 +120,7 @@ extern void     LoadContext( void );	// Restores DSP registers from TCB pointed 
 //Own helper functions
 static void     insertionSort( list* l );
 static void     sortedInsert( list* l, listobj* o );
+static listobj* create_listobj( TCB* t );
 static list*    create_list( void );
 static void     idle_function( void );
 

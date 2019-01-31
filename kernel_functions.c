@@ -17,43 +17,44 @@ exception create_task( void(* body)(), uint d )
 {
   //Allocate memory for TCB
   isr_off(); /* protextion of calloc */
-  TCB* ptr_tcb = (TCB *)calloc(1,sizeof(TCB));
-  if ( ptr_tcb == NULL ) {
+  TCB* pTCB = (TCB *)calloc(1,sizeof(TCB));
+  if ( pTCB == NULL ) {
     //F: perhaps a real solution in the future...
     return FAIL;
   }
   
   //Set deadline in TCB
-  ptr_tcb->DeadLine = d;
+  pTCB->DeadLine = d;
   
   //Set the TCB's PC to point to the task body
-  ptr_tcb->PC = body;
+  pTCB->PC = body;
   
   //Set TCB's SP to point to the stack segment
   //First element on stack is omitted for safety reasons
-  ptr_tcb->StackSeg[STACK_SIZE-2] = 0x21000000; /* PSR */
-  ptr_tcb->StackSeg[STACK_SIZE-3] = (uint)body; /* PC */
-  ptr_tcb->StackSeg[STACK_SIZE-4] = 0; /* LR */
+  pTCB->StackSeg[STACK_SIZE-2] = 0x21000000; /* PSR */
+  pTCB->StackSeg[STACK_SIZE-3] = (uint)body; /* PC */
+  pTCB->StackSeg[STACK_SIZE-4] = 0; /* LR */
   //Skip some Stack elements for r12, r3, r2, r1, r0.
-  ptr_tcb->SP = &( ptr_tcb->StackSeg[STACK_SIZE-9] );
-    
+  pTCB->SP = &( pTCB->StackSeg[STACK_SIZE-9] );
+  
   //IF start-up mode THEN
   if ( in_startup )
   {
     //Create ListObj for TCB
+    
     //Insert new task in Readylist
     
     
     //Return status
-  //ELSE
+    //ELSE
     //Disable interrupts
     //Save context
     //IF "first execution" THEN
-      //Set: "not first execution any more"
-      //Insert new task in Readylist
-      //Load Context
+    //Set: "not first execution any more"
+    //Insert new task in Readylist
+    //Load Context
     //ENDIF
-  //ENDIF
+    //ENDIF
   }
   //Return status
   return FAIL;
@@ -101,111 +102,94 @@ void TimerInt(void)
 
 void insertionSort(list* l) 
 { 
-   
-    list* sorted = create_list(); 
-    
-    // Traverse the given doubly linked list and 
-    // insert every node to 'sorted' 
-    listobj* current = l->pHead->pNext; 
-    l->pHead->pNext = NULL;
-    while (current->pTask != NULL) { 
-  
-        // Store next for next iteration 
-        listobj* next = current->pNext; 
-  
-        // removing all the links so as to create 'current' 
-        // as a new node for insertion 
-        current->pPrevious = current->pNext = NULL;
-  
-        // insert current in 'sorted' doubly linked list 
-        sortedInsert(sorted, current); 
-  
-        // Update current 
-        current = next; 
-    } 
-  
-    // Update head_ref to point to sorted doubly linked list 
-    l = sorted; 
+  list* sorted = create_list(); 
+  listobj* current = l->pHead->pNext; 
+  l->pHead->pNext = NULL;
+  while (current->pTask != NULL)
+  {   
+    listobj* next = current->pNext; 
+    current->pPrevious = current->pNext = NULL;
+    sortedInsert(sorted, current); 
+    current = next; 
+  }  
+  //@TODO: Free memory space taken by original l
+  l = sorted;
 } 
-void sortedInsert(list* sortedList, listobj* newNode)
+
+// Only call if l is already sorted!
+void sortedInsert(list* l, listobj* o)
 { 
-    listobj* current;
-    
-    listobj *head_ref = sortedList->pHead->pNext; //skip dummy
-    
-  
-    // if list is empty 
-    if (head_ref->pTask == NULL){ //last dummy
-      newNode->pNext = sortedList->pTail;
-      newNode->pPrevious = sortedList->pHead;
-      sortedList->pHead->pNext = newNode;
-      sortedList->pTail->pPrevious = newNode;
-      
-    }
-        
-  
-    // if the node is to be inserted at the beginning 
-    // of the doubly linked list 
-    else if (head_ref->pTask->DeadLine >= newNode->pTask->DeadLine) { 
-        newNode->pNext = head_ref; 
-        newNode->pNext->pPrevious = newNode;  
-    } 
-  
-    else { 
-        current = head_ref; 
-  
-        // locate the node after which the new node 
-        // is to be inserted 
-        while (current->pNext->pTask != NULL &&  
-               current->pNext->pTask->DeadLine < newNode->pTask->DeadLine) 
-            current = current->pNext; 
-  
-        /*Make the appropriate links */
-  
-        newNode->pNext = current->pNext; 
-  
-        // if the new node is not inserted 
-        // at the end of the list 
-        if (current->pNext->pTask != NULL) 
-            newNode->pNext->pPrevious = newNode; 
-  
-        current->pNext = newNode; 
-        newNode->pPrevious = current; 
-    } 
-} 
+  listobj* current;
+  listobj* first = l->pHead->pNext; /* skip head */
 
-static list* create_list( void ) {
-  list *newList =  calloc(1,sizeof(list));
-  newList->pHead = calloc(1,sizeof(listobj));
-  newList->pTail = calloc(1,sizeof(listobj));
-  //Head
-  newList->pHead->pTask = NULL;
-  newList->pHead->nTCnt = 0;
-  newList->pHead->pMessage = NULL;
-  newList->pHead->pPrevious = NULL;
-  newList->pHead->pNext = newList->pTail;
-  //Tail
-  newList->pTail->pTask = NULL;
-  newList->pTail->nTCnt = 0;
-  newList->pTail->pMessage = NULL;
-  newList->pTail->pPrevious = newList->pHead;
-  newList->pTail->pNext = NULL;
-  return newList;
-}
-
-static void idle_function(void){
-    while(1)
+  // SPECIAL CASE: Empty List.
+  if (first->pTask == NULL) /* check for tail */
+  {
+    o->pNext = l->pTail;
+    o->pPrevious = l->pHead;
+    l->pHead->pNext = o;
+    l->pTail->pPrevious = o;
+  }
+  // SPECIAL CASE: New object has lower deadline than first in list.
+  else if (o->pTask->DeadLine < first->pTask->DeadLine)
+  { 
+    o->pNext = first; 
+    o->pNext->pPrevious = o;  
+  } 
+  // All other cases.
+  else 
+  { 
+    current = first;
+    // Iterate through list until current followers deadline is smaller than the one of the new object.
+    while (current->pNext->pTask->DeadLine <= o->pTask->DeadLine && current->pNext->pTask != NULL)
     {
-      //Nothing
+      current = current->pNext;
     }
+    // Changing the pointers.
+    o->pNext = current->pNext;
+    o->pPrevious = current;
+    o->pNext->pPrevious = o;
+    current->pNext = o;
+  } 
 }
 
-static void add_to_list( list* l, listobj* o ) {
-  listobj* last = l->pTail->pPrevious;
-  last->pNext = o;
-  o->pPrevious =last;
-  o->pNext = l->pTail;
-  l->pTail->pPrevious = o;
+static listobj* create_listobj( TCB* t )
+{
+  listobj* o = ( listobj* ) calloc( 1, sizeof( listobj ) );
+  o->pTask = t;
+  o->nTCnt = 0;
+  o->pMessage = NULL;
+  o->pPrevious = NULL;
+  o->pNext = NULL;
+  return o;
 }
+
+static list* create_list( void )
+{
+  list* l = ( list* ) calloc( 1, sizeof( list ) );
+  l->pHead = create_listobj(NULL);
+  l->pTail = create_listobj(NULL);
+  l->pHead->pNext = l->pTail;
+  l->pTail->pPrevious = l->pHead;
+  return l;
+}
+
+static void idle_function(void)
+{
+  while(1)
+  {
+    //SWYM
+  }
+}
+
+
+////deprecated
+//static void add_to_list( list* l, listobj* o ) {
+//  listobj* last = l->pTail->pPrevious;
+//  last->pNext = o;
+//  o->pPrevious =last;
+//  o->pNext = l->pTail;
+//  l->pTail->pPrevious = o;
+//}
 
 
