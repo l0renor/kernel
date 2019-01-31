@@ -104,3 +104,11 @@ exception init_kernel(void){
   
 }
 
+static void add_to_list(*list l, *l_obj o) {
+  listobj* last = l->pTail->pPrevious;
+  last->pNext = o;
+  o->pPrevious =last;
+  o->pNext = l->pTail;
+  l->pTail->pPrevious = o;
+}
+
