@@ -85,12 +85,8 @@ typedef struct _list {
 
 // Function prototypes
 
-//tools
-void insertionSort(list* listToSort); 
-void sortedInsert(listobj* head_ref, listobj* newNode)
-
 // Task administration
-int             init_kernel(void);
+int             init_kernel( void );
 exception	create_task( void (* body)(), uint d );
 void            terminate( void );
 void            run( void );
@@ -112,10 +108,17 @@ void            set_ticks( uint no_of_ticks );
 uint            ticks( void );
 uint		deadline( void );
 void            set_deadline( uint nNew );
-void            TimerInt(void);
+void            TimerInt( void );
 
 //Interrupt
-extern void     isr_off(void);
-extern void     isr_on(void);
+extern void     isr_off( void );
+extern void     isr_on( void );
 extern void     SaveContext( void );	// Stores DSP registers in TCB pointed to by Running
 extern void     LoadContext( void );	// Restores DSP registers from TCB pointed to by Running
+
+//Own helper functions
+static void     insertionSort( list* l );
+static void     sortedInsert( list* l, listobj* o );
+static list*    create_list( void );
+static void     idle_function( void );
+
