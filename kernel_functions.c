@@ -37,7 +37,7 @@ exception create_task( void(* body)(), uint d )
 {
   //Allocate memory for TCB
   isr_off(); /* protextion of calloc */
-  ptr_tcb = (TCB *)calloc(1,sizeof(TCB));
+  TCB* ptr_tcb = (TCB *)calloc(1,sizeof(TCB));
   if ( ptr_tcb == NULL ) {
     //F: perhaps a real solution in the future...
     return FAIL;
@@ -60,8 +60,10 @@ exception create_task( void(* body)(), uint d )
   //IF start-up mode THEN
   if ( in_startup )
   {
+    //Create ListObj for TCB
     //Insert new task in Readylist
-    p 
+    
+    
     //Return status
   //ELSE
     //Disable interrupts
@@ -117,7 +119,7 @@ void TimerInt(void)
   }
 }
 
-static void add_to_list(*list l, *l_obj o) {
+static void add_to_list(list* l, listobj* o) {
   listobj* last = l->pTail->pPrevious;
   last->pNext = o;
   o->pPrevious =last;
