@@ -87,7 +87,7 @@ typedef struct _list {
 
 //tools
 void insertionSort(list* listToSort); 
-void sortedInsert(listobj* head_ref, listobj* newNode)
+void sortedInsert(listobj* head_ref, listobj* newNode);
 
 // Task administration
 int             init_kernel(void);
