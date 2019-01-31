@@ -11,9 +11,11 @@ list *readyList;
 list *blockedList; 
 list *sleepList;
 
-*list createList(){
-  list *readyList =  calloc(1,sizeof(list));
-  list ->pHead = calloc(1,sizeof(l_obj));
+void run(void);
+
+* _list createList(){
+  list *list =  calloc(1,sizeof(_list));
+  list->pHead = calloc(1,sizeof(l_obj));
   list->pTail = calloc(1,sizeof(l_obj));
   //Head
   list->pHead->pTask = NULL;
@@ -76,16 +78,29 @@ exception create_task( void(* body)(), uint d )
 }
 
 exception init_kernel(void){
-  extern bool in_startup = TRUE;
+  exception result = OK;
+  in_startup = TRUE;
   timerTimerInt();
   isr_off()
-  extern list *readyList = createList();
-  extern list *blockedList =  createList();
-  extern list *sleepList =  createList():
+  readyList = createList();
+  if(readyList == NULL){
+  result = FAIL;
+  }
+  blockedList =  createList();
+  if(blockedList == NULL){
+  result = FAIL;
+  }
+  sleepList =  createList():
+  if(blockedList == NULL){
+  result = FAIL;
+  }
   isr_on();
   void idle_function(void){
     while(1){}
   }
+  exception idleTaskException = create_task(idle_function, UINT_MAX);
+  
+  return result && idleTaskException;
   
 }
 

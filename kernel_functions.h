@@ -30,9 +30,6 @@ typedef int             bool;
 typedef unsigned int    uint;
 typedef int 		action;
 
-extern list *readyList;
-extern list *blockedList; 
-extern list *sleepList;
 struct  l_obj;         // Forward declaration
 
 
