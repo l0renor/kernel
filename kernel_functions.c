@@ -15,23 +15,23 @@ exception create_task(void(*task_body)(), uint deadline);
 
 void run(void);
 
-* _list createList(){
-  list *list =  calloc(1,sizeof(_list));
-  list->pHead = calloc(1,sizeof(l_obj));
-  list->pTail = calloc(1,sizeof(l_obj));
+list * createList(){
+  list *newList =  calloc(1,sizeof(list));
+  newList->pHead = calloc(1,sizeof(listobj));
+  newList->pTail = calloc(1,sizeof(listobj));
   //Head
-  list->pHead->pTask = NULL;
-  list->pHead->nTCnt = 0;
-  list->pHead->pMessage = NULL;
-  list->pHead->pPrevious = NULL;
-  list->pHead->pNext = list->pTail;
+  newList->pHead->pTask = NULL;
+  newList->pHead->nTCnt = 0;
+  newList->pHead->pMessage = NULL;
+  newList->pHead->pPrevious = NULL;
+  newList->pHead->pNext = newList->pTail;
   //Tail
-  list->pTail->pTask = NULL;
-  list->pTail->nTCnt = 0;
-  list->pTail->pMessage = NULL;
-  list->pTail->pPrevious = list->pHead;
-  list->pTail->pNext = list->NULL;
-  return list;
+  newList->pTail->pTask = NULL;
+  newList->pTail->nTCnt = 0;
+  newList->pTail->pMessage = NULL;
+  newList->pTail->pPrevious = newList->pHead;
+  newList->pTail->pNext = NULL;
+  return newList;
 }
 
 void TimerInt(void);
@@ -78,26 +78,20 @@ exception create_task(void(*task_body)(), uint deadline)
   return FAIL;
 }
 
-void run(void)
-{
-  RunningTask = ptr_tcbForTaskOne;
-  LoadContext();
-}
-
 exception init_kernel(void){
   exception result = OK;
   in_startup = TRUE;
-  timerTimerInt();
-  isr_off()
-  readyList = createList();
+  TimerInt();
+  isr_off();
+  list *readyList = createList();
   if(readyList == NULL){
   result = FAIL;
   }
-  blockedList =  createList();
+  list *blockedList =  createList();
   if(blockedList == NULL){
   result = FAIL;
   }
-  sleepList =  createList():
+  list *sleepList =  createList();
   if(blockedList == NULL){
   result = FAIL;
   }
