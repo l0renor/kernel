@@ -56,6 +56,7 @@ exception init_kernel(void){
   void idle_function(void){
     while(1){}
   }
+  exception idleTaskException = create_task( void (* body)(), uint d );
   
 }
 
