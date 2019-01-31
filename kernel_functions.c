@@ -41,23 +41,33 @@ exception create_task( void(* body)(), uint d )
     //Create ListObj for TCB
     lo = create_listobj(pTCB);
     //Insert new task in Readylist
-    sortedInsert(ready
-    
+    sortedInsert(ready_list, lo);
     //Return status
-    //ELSE
+    return OK;
+  }
+  //ELSE
+  else
+  {
+    static bool is_first_exec = TRUE;
     //Disable interrupts
+    isr_off();
     //Save context
+    SaveContext();
     //IF "first execution" THEN
-    //Set: "not first execution any more"
-    //Insert new task in Readylist
-    //Load Context
-    //ENDIF
-    //ENDIF
+    if ( is_first_execution == TRUE )
+    {
+      //Set: "not first execution any more"
+      is_first_execution = FALSE;
+      //Create ListObj for TCB
+      lo = create_listobj(pTCB);
+      //Insert new task in Readylist
+      sortedInsert(ready_list, lo);
+      //Load Context
+      LoadContext();
+    }
   }
   //Return status
   return FAIL;
-  
-  
 }
 
 exception init_kernel(void){
