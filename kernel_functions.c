@@ -129,9 +129,9 @@ void insertionSort(list* l)
 } 
 void sortedInsert(list* sortedList, listobj* newNode)
 { 
-    struct Node* current;
+    listobj* current;
     
-    listobj head_ref = sortedList->*pHead->pNext; //skip dummy
+    listobj *head_ref = sortedList->pHead->pNext; //skip dummy
     
   
     // if list is empty 
@@ -146,7 +146,7 @@ void sortedInsert(list* sortedList, listobj* newNode)
   
     // if the node is to be inserted at the beginning 
     // of the doubly linked list 
-    else if (head_ref->TCB->DeadLine >= newNode->data->TCB->DeadLine) { 
+    else if (head_ref->pTask->DeadLine >= newNode->pTask->DeadLine) { 
         newNode->pNext = head_ref; 
         newNode->pNext->pPrevious = newNode;  
     } 
@@ -157,7 +157,7 @@ void sortedInsert(list* sortedList, listobj* newNode)
         // locate the node after which the new node 
         // is to be inserted 
         while (current->pNext->pTask != NULL &&  
-               current->pNext->TCB->DeadLine < newNode->TCB->DeadLine) 
+               current->pNext->pTask->DeadLine < newNode->pTask->DeadLine) 
             current = current->pNext; 
   
         /*Make the appropriate links */
