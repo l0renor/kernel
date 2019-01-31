@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 
-#define CONTEXT_SIZE    13  /*  for the 13 general purpose registers: r0 to r12 */ 
+#define CONTEXT_SIZE    13  /* for the 13 general purpose registers: r0 to r12 */ 
 #define STACK_SIZE      100 /* 100  about enough space*/
 
 
@@ -111,7 +111,7 @@ uint		deadline( void );
 void            set_deadline( uint nNew );
 void            TimerInt( void );
 
-//Interrupt
+// Interrupt
 extern void     isr_off( void );
 extern void     isr_on( void );
 extern void     SaveContext( void );	// Stores DSP registers in TCB pointed to by Running

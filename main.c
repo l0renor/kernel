@@ -5,7 +5,6 @@
 
 void main(void)
 {
-  
     SystemInit();
     
 }

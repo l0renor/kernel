@@ -9,7 +9,31 @@ TCB     *RunningTask;
 bool    in_startup;
 list*   ready_list, blocked_list, sleep_list;
 
-void run(void);
+// Task administration
+
+int init_kernel( void ){
+  exception result = OK;
+  in_startup = TRUE;
+  TimerInt();
+  isr_off();
+  list *ready_list = create_list();
+  if(ready_list == NULL){
+    result = FAIL;
+  }
+  list *blocked_list =  create_list();
+  if(blocked_list == NULL){
+    result = FAIL;
+  }
+  list *sleep_list =  create_list();
+  if(blocked_list == NULL){
+    result = FAIL;
+  }
+  isr_on();
+  
+  exception idleTaskException = create_task(idle_function, UINT_MAX);
+  
+  return result && idleTaskException;
+}
 
 exception create_task( void(* body)(), uint d )
 {
@@ -70,30 +94,8 @@ exception create_task( void(* body)(), uint d )
   return FAIL;
 }
 
-exception init_kernel(void){
-  exception result = OK;
-  in_startup = TRUE;
-  TimerInt();
-  isr_off();
-  list *ready_list = create_list();
-  if(ready_list == NULL){
-    result = FAIL;
-  }
-  list *blocked_list =  create_list();
-  if(blocked_list == NULL){
-    result = FAIL;
-  }
-  list *sleep_list =  create_list();
-  if(blocked_list == NULL){
-    result = FAIL;
-  }
-  isr_on();
-  
-  exception idleTaskException = create_task(idle_function, UINT_MAX);
-  
-  return result && idleTaskException;
-  
-}
+// Timing 
+
 void TimerInt(void)
 {
   static unsigned int ticks, first = 1;
@@ -107,6 +109,8 @@ void TimerInt(void)
     ticks = ticks + 1;
   }
 }
+
+// Own helper functions
 
 void insertion_sort(list* l) 
 { 
