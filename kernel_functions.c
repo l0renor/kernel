@@ -39,16 +39,16 @@ exception create_task( void(* body)(), uint d )
   if ( in_startup )
   {
     //Create ListObj for TCB
-    lo = create_listobj(pTCB);
+    listobj* o = create_listobj(pTCB);
     //Insert new task in Readylist
-    sortedInsert(ready_list, lo);
+    sorted_insert(ready_list, o);
     //Return status
     return OK;
   }
   //ELSE
   else
   {
-    static bool is_first_exec = TRUE;
+    static bool is_first_execution = TRUE;
     //Disable interrupts
     isr_off();
     //Save context
@@ -59,9 +59,9 @@ exception create_task( void(* body)(), uint d )
       //Set: "not first execution any more"
       is_first_execution = FALSE;
       //Create ListObj for TCB
-      lo = create_listobj(pTCB);
+      listobj* o = create_listobj(pTCB);
       //Insert new task in Readylist
-      sortedInsert(ready_list, lo);
+      sorted_insert(ready_list, o);
       //Load Context
       LoadContext();
     }
