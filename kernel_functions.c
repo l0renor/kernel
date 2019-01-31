@@ -76,7 +76,9 @@ exception create_task( void(* body)(), uint d )
   //Return status
   return FAIL;
 }
-
+void idle_function(void){
+    while(1){}
+  }
 exception init_kernel(void){
   exception result = OK;
   in_startup = TRUE;
@@ -95,13 +97,24 @@ exception init_kernel(void){
   result = FAIL;
   }
   isr_on();
-  void idle_function(void){
-    while(1){}
-  }
+  
   exception idleTaskException = create_task(idle_function, UINT_MAX);
   
   return result && idleTaskException;
   
+}
+void TimerInt(void)
+{
+  static unsigned int ticks, first = 1;
+  if (first == 1) 
+  {
+    first = 0; 
+    ticks = 1;
+  }
+  else 
+  {
+    ticks = ticks + 1;
+  }
 }
 
 static void add_to_list(*list l, *l_obj o) {

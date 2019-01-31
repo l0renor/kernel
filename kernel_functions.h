@@ -109,6 +109,7 @@ void            set_ticks( uint no_of_ticks );
 uint            ticks( void );
 uint		deadline( void );
 void            set_deadline( uint nNew );
+void            TimerInt(void);
 
 //Interrupt
 extern void     isr_off(void);
