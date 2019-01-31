@@ -28,7 +28,7 @@
 typedef int             exception;
 typedef int             bool;
 typedef unsigned int    uint;
-typedef int 			action;
+typedef int 		action;
 
 extern list *readyList;
 extern list *blockedList; 
