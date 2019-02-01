@@ -123,4 +123,6 @@ static void     sorted_insert( list* l, listobj* o );
 static listobj* create_listobj( TCB* t );
 static list*    create_list( void );
 static void     idle_function( void );
+static void     scedule(void);
+
 
