@@ -6,5 +6,6 @@
 void main(void)
 {
     SystemInit();
+    int res = init_kernel();
     
 }

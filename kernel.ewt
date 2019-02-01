@@ -2370,6 +2370,9 @@
         </settings>
     </configuration>
     <file>
+        <name>$PROJ_DIR$\context_switching_functions.s</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\cstartup.s</name>
     </file>
     <file>

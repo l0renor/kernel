@@ -7,32 +7,28 @@ extern void __get_PSP_from_TCB(void);
 
 TCB     *RunningTask;
 bool    in_startup;
-list*   ready_list, blocked_list, sleep_list;
+list    *ready_list, *blocked_list, *sleep_list;
 
 // Task administration
 
 int init_kernel( void ){
-  exception result = OK;
   in_startup = TRUE;
   TimerInt();
-  isr_off();
-  list *ready_list = create_list();
-  if(ready_list == NULL){
-    result = FAIL;
+  ready_list = create_list();
+  blocked_list = create_list();
+  sleep_list = create_list();
+  if(sleep_list == NULL || ready_list == NULL || blocked_list == NULL){
+    return FAIL;
   }
-  list *blocked_list =  create_list();
-  if(blocked_list == NULL){
-    result = FAIL;
-  }
-  list *sleep_list =  create_list();
-  if(blocked_list == NULL){
-    result = FAIL;
-  }
-  isr_on();
   
   exception idleTaskException = create_task(idle_function, UINT_MAX);
+  //test code list 
+  idleTaskException = create_task(idle_function, 1); 
+  idleTaskException = create_task(idle_function, 7); 
+  idleTaskException = create_task(idle_function, 2);
+  //end test code 
   
-  return result && idleTaskException;
+  return idleTaskException;
 }
 
 exception create_task( void(* body)(), uint d )
@@ -86,6 +82,7 @@ exception create_task( void(* body)(), uint d )
       listobj* o = create_listobj(pTCB);
       //Insert new task in Readylist
       sorted_insert(ready_list, o);
+      
       //Load Context
       LoadContext();
     }
@@ -131,7 +128,6 @@ void insertion_sort(list* l)
 // Only call if l is already sorted!
 void sorted_insert(list* l, listobj* o)
 { 
-  listobj* current;
   listobj* first = l->pHead->pNext; /* skip head */
 
   // SPECIAL CASE: Empty List.
@@ -145,44 +141,54 @@ void sorted_insert(list* l, listobj* o)
   // SPECIAL CASE: New object has lower deadline than first in list.
   else if (o->pTask->DeadLine < first->pTask->DeadLine)
   { 
-    o->pNext = first; 
-    o->pNext->pPrevious = o;  
+    o->pNext = first;
+    o->pPrevious = l->pHead;
+    l->pHead->pNext = o;
+    first->pPrevious = o;
   } 
   // All other cases.
   else 
   { 
-    current = first;
+    listobj* current = first;
     // Iterate through list until current followers deadline is smaller than the one of the new object.
     while (current->pNext->pTask->DeadLine <= o->pTask->DeadLine && current->pNext->pTask != NULL)
     {
       current = current->pNext;
     }
     // Changing the pointers.
-    o->pNext = current->pNext;
+    listobj* follower = current->pNext;
+    o->pNext = follower;
     o->pPrevious = current;
-    o->pNext->pPrevious = o;
+    follower->pPrevious = o;
     current->pNext = o;
   } 
 }
 
 static listobj* create_listobj( TCB* t )
-{
+{       
   listobj* o = ( listobj* ) calloc( 1, sizeof( listobj ) );
-  o->pTask = t;
-  o->nTCnt = 0;
-  o->pMessage = NULL;
-  o->pPrevious = NULL;
-  o->pNext = NULL;
+  if(o != NULL){
+    o->pTask = t;
+    o->nTCnt = 0;
+    o->pMessage = NULL;
+    o->pPrevious = NULL;
+    o->pNext = NULL;
+  }
   return o;
 }
 
 static list* create_list( void )
 {
+  isr_off();
   list* l = ( list* ) calloc( 1, sizeof( list ) );
-  l->pHead = create_listobj(NULL);
-  l->pTail = create_listobj(NULL);
-  l->pHead->pNext = l->pTail;
-  l->pTail->pPrevious = l->pHead;
+  if(l != NULL)
+  {
+    l->pHead = create_listobj(NULL);
+    l->pTail = create_listobj(NULL);
+    l->pHead->pNext = l->pTail;
+    l->pTail->pPrevious = l->pHead;
+  }
+  isr_on();
   return l;
 }
 
