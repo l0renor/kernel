@@ -5,13 +5,16 @@ extern void LoadContext(void);
 extern void SelectPSP(void);
 extern void __get_PSP_from_TCB(void);
 
-TCB     *RunningTask;
-bool    in_startup;
-list    *ready_list, *blocked_list, *sleep_list;
+TCB             *RunningTask;
+static bool     in_startup;
+static list*    ready_list;
+static list*    blocked_list;
+static list*    sleep_list;
 
 // Task administration
 
-int init_kernel( void ){
+int init_kernel( void )
+{
   in_startup = TRUE;
   TimerInt();
   ready_list = create_list();
@@ -91,6 +94,20 @@ exception create_task( void(* body)(), uint d )
   return FAIL;
 }
 
+
+
+
+void run( void ) 
+{
+  //Initialize interrupt timer
+  
+  //Set the kernel in running mode
+  in_startup = FALSE;
+  //Enable interrupts
+  isr_on();
+  //Load context
+  LoadContext();
+}
 // Timing 
 
 void TimerInt(void)
