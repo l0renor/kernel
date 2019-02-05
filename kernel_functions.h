@@ -125,4 +125,5 @@ static listobj* create_listobj( TCB* t );
 static list*    create_list( void );
 static void     idle_function( void );
 static uint     number_of_messages( mailbox* mBox );
+static void     schedule(void);
 

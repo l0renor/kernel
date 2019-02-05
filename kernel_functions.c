@@ -111,6 +111,23 @@ exception remove_mailbox( mailbox* mBox )
   }
 }
 
+void terminate()
+{
+  //remove from readyList
+  listobj *toDelObject = ready_list->pHead->pNext;
+  TCB   *toDelTCB = toDelObject->pTask;
+  ready_list->pHead->pNext =  ready_list->pHead->pNext->pNext;
+  ready_list->pHead->pNext->pNext->pPrevious = ready_list->pHead->pNext;
+  //Set running task
+  insertion_sort(ready_list);
+  RunningTask = ready_list->pHead->pNext->pTask;
+  //Delete old task
+  free(toDelTCB);
+  free(toDelObject);
+  isr_off();
+  LoadContext(); 
+}
+
 void run( void ) 
 {
   //Initialize interrupt timer
@@ -122,6 +139,7 @@ void run( void )
   //Load context
   LoadContext();
 }
+
 // Timing 
 
 void TimerInt(void)
