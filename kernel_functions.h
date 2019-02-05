@@ -24,6 +24,7 @@
 #define SENDER          +1
 #define DUMMY           0
 #define RECEIVER        -1
+#define DUMMY           0
 
 
 typedef int             exception;
@@ -126,4 +127,6 @@ static list*    create_list( void );
 static void     idle_function( void );
 static uint     number_of_messages( mailbox* mBox );
 static void     schedule(void);
+static msg* 	create_message(char *pData,exception Status);
+
 
