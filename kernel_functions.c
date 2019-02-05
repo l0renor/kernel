@@ -123,6 +123,20 @@ void run( void )
   //Load context
   LoadContext();
 }
+//IPC
+mailbox*  create_mailbox( uint nMessages, uint nDataSize)
+{
+  mailbox *result = (mailbox*)calloc(1,sizeof(mailbox));
+  result->nDataSize = nDataSize;
+  result->nMessages = nMessages;
+  result->nBlockedMsg = 0;
+  result->pHead = crate_message(NULL,0);
+  result->pTail = crate_message(NULL,0);
+  result->pHead->pNext = result->pTail;
+  result->pTail->pPrevious = result->pHead;
+  return result;
+
+}
 
 // Timing 
 
@@ -231,6 +245,17 @@ static void idle_function(void)
   {
     //SWYM
   }
+}
+static msg* crate_message(char *pData,exception Status)
+{
+  msg *m = (msg*)calloc(1,sizeof(msg));
+  m->pData = pData;
+  m->Status = Status;
+  m->pBlock = NULL;
+  m->pPrevious = NULL;
+  m->pNext = NULL;
+  return m;
+
 }
 
 

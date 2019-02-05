@@ -23,6 +23,7 @@
 
 #define SENDER          +1
 #define RECEIVER        -1
+#define DUMMY           0
 
 
 typedef int             exception;
@@ -124,5 +125,6 @@ static listobj* create_listobj( TCB* t );
 static list*    create_list( void );
 static void     idle_function( void );
 static void     scedule(void);
+static msg* crate_message(char *pData,exception Status);
 
 
