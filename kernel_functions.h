@@ -16,12 +16,13 @@
 
 #define FAIL    0
 #define SUCCESS 1
-#define OK              1
+#define OK      1
 
 #define DEADLINE_REACHED        0
 #define NOT_EMPTY               0
 
 #define SENDER          +1
+#define DUMMY           0
 #define RECEIVER        -1
 
 
@@ -94,7 +95,7 @@ void            run( void );
 
 // Communication
 mailbox*	create_mailbox( uint nMessages, uint nDataSize );
-int             no_messages( mailbox* mBox );
+exception       remove_mailbox( mailbox* mBox );
 
 exception       send_wait( mailbox* mBox, void* pData );
 exception       receive_wait( mailbox* mBox, void* pData );
@@ -123,4 +124,5 @@ static void     sorted_insert( list* l, listobj* o );
 static listobj* create_listobj( TCB* t );
 static list*    create_list( void );
 static void     idle_function( void );
+static uint     number_of_messages( mailbox* mBox );
 
