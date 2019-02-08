@@ -131,8 +131,8 @@ mailbox* create_mailbox( uint nMessages, uint nDataSize)
   result->nDataSize = nDataSize;
   result->nMessages = nMessages;
   result->nBlockedMsg = 0;
-  result->pHead = crate_message(NULL,0);
-  result->pTail = crate_message(NULL,0);
+  result->pHead = create_message(NULL,0);
+  result->pTail = create_message(NULL,0);
   result->pHead->pNext = result->pTail;
   result->pTail->pPrevious = result->pHead;
   return result;
@@ -171,9 +171,9 @@ exception receive_wait( mailbox* mBox, void* pData )
     //IF send Message is waiting THEN
     if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0)
     {
-      msg* sender = popHead(mBox
+      msg* sender = popHead(mBox);
       //Copy sender's data to receiving task's data area
-      
+      memcpy(
       //Remove sending task's message struct from the Mailbox
       //IF Message was of wait type THEN
         //Move sending task to Ready list
@@ -203,8 +203,37 @@ exception receive_wait( mailbox* mBox, void* pData )
 
 exception send_wait( mailbox* mBox, void* pData )
 {
+  static bool is_first_execution = TRUE;
+    //Disable interrupts
+    isr_off();
+    //Save context
+    SaveContext();
+    //IF "first execution" THEN
+    if ( is_first_execution == TRUE )
+    {
+      //Set: "not first execution any more"
+      is_first_execution = FALSE;
+      if(mBox->nBlockedMsg < 0){//reciving tasks waiting
+        msg* m = popHead(mBox);
+        //copy senders data into reciver
+        m->pData = (char*)calloc(1,sizeof(mBox->nDataSize));
+        //todo free data?;
+        //m->pBlock
+        free(m);
+        
+        
+        
+        
+      
+      }
+      //Copy senders data into data area of recivers message
+      
+      
+    }
+  }
   
-}
+  
+
 
 // Timing 
 
@@ -253,8 +282,7 @@ void sorted_insert(list* l, listobj* o)
     l->pHead->pNext = o;
     l->pTail->pPrevious = o;
   }
-  // SPECIAL CASE: New object has lower deadline than 
-  in list.
+  // SPECIAL CASE: New object has lower deadline than in list.
   else if (o->pTask->DeadLine < first->pTask->DeadLine)
   { 
     o->pNext = first;
@@ -315,7 +343,7 @@ static void idle_function( void )
     //SWYM
   }
 }
-static msg* crate_message(char *pData,exception Status)
+static msg* create_message(char *pData,exception Status)
 {
   msg *m = (msg*)calloc(1,sizeof(msg));
   m->pData = pData;
@@ -326,6 +354,28 @@ static msg* crate_message(char *pData,exception Status)
   return m;
 }
 
+static msg* popHead(mailbox* mBox)
+{
+msg* result =  mBox->pHead->pNext;
+//change pointers
+mBox->pHead->pNext = mBox->pHead->pNext->pNext;
+mBox->pHead->pNext->pPrevious = mBox->pHead;
+return result;
+}
+
+static void pushtail( msg* m,mailbox* mBox){
+  m->pNext = mBox->pTail;
+  m->pPrevious = mBox->pTail->pPrevious;
+  mBox->pTail->pPrevious->pNext = m;
+  mBox->pTail->pPrevious = m;
+}
+
+static void     remove_from_list( list* l, listobj* o){
+listobj* current = l->pHead;
+while(current!= o){
+} 
+
+}
 
 
 ////deprecated
