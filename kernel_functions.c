@@ -94,23 +94,6 @@ exception create_task( void(* body)(), uint d )
   return FAIL;
 }
 
-exception remove_mailbox( mailbox* mBox )
-{
-  //IF Mailbox is empty THEN
-  if ( number_of_messages(mBox) == 0 )
-  {
-    //Free the memory for the Mailbox
-    free(mBox->pHead);
-    free(mBox->pTail);
-    free(mBox);
-    return OK;
-  }
-  else
-  {
-    return NOT_EMPTY;
-  }
-}
-
 void terminate()
 {
   //remove from readyList
@@ -139,8 +122,10 @@ void run( void )
   //Load context
   LoadContext();
 }
-//IPC
-mailbox*  create_mailbox( uint nMessages, uint nDataSize)
+
+// Communication
+
+mailbox* create_mailbox( uint nMessages, uint nDataSize)
 {
   mailbox *result = (mailbox*)calloc(1,sizeof(mailbox));
   result->nDataSize = nDataSize;
@@ -153,6 +138,89 @@ mailbox*  create_mailbox( uint nMessages, uint nDataSize)
   return result;
 
 }
+
+exception remove_mailbox( mailbox* mBox )
+{
+  //IF Mailbox is empty THEN
+  if ( number_of_messages(mBox) == 0 )
+  {
+    //Free the memory for the Mailbox
+    free(mBox->pHead);
+    free(mBox->pTail);
+    free(mBox);
+    return OK;
+  }
+  else
+  {
+    return NOT_EMPTY;
+  }
+}
+
+exception receive_wait( mailbox* mBox, void* pData )
+{
+  static bool is_first_execution = TRUE;
+  //Disable interrupt
+  isr_off();
+  //Save context
+  SaveContext();
+  //IF first execution THEN
+  if ( is_first_execution == TRUE )
+  {
+    //SET "not first execution any more"
+    is_first_execution = FALSE;
+    //IF send Message is waiting THEN
+    if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0)
+    {
+      msg* sender = popHead(mBox);
+      mBox->nMessages--;
+      mBox->nBlockedMsg--;
+      //Copy sender's data to receiving task's data area
+      memcpy(pData, sender->pData, mBox->nDataSize);
+      //IF Message was of wait type THEN
+      if ( sender->pBlock != NULL )
+      {
+        //Move sending task to Ready list
+      }
+      else 
+      {
+        //Free senders data area
+      }
+    }
+    else
+    { 
+      //Allocate a Message structure
+      msg* message = ( msg* ) calloc( 1, sizeof( msg ) );
+      //Add Message to the Mailbox
+      push_tail(mBox, msg);
+      //Move receiving task from Readylist to Waitinglist
+      remove_from_list(ready_list, RunningTask);
+      sorted_insert(blocked_list, RunningTask);
+    }
+    LoadContext();
+  }
+  else
+  {
+    if (deadline() <= 0)
+    {
+      //Disable interrupt
+      isr_off();
+      //Remove receive Message
+      remove_running_task_from_mailbox(mBox);
+      //Enable interrupt
+      isr_on();
+      //Return DEADLINE_REACHED
+      return DEADLINE_REACHED;
+    }
+    else
+    {
+      //Return OK
+      return OK;
+    }
+  }
+}
+
+
+
 
 exception send_wait( mailbox* mBox, void* pData )
 {
@@ -327,39 +395,48 @@ static msg* create_message(char *pData,exception Status)
   m->pPrevious = NULL;
   m->pNext = NULL;
   return m;
-
 }
 
 static msg* popHead(mailbox* mBox)
 {
-msg* result =  mBox->pHead->pNext;
-//change pointers
-mBox->pHead->pNext = mBox->pHead->pNext->pNext;
-mBox->pHead->pNext->pPrevious = mBox->pHead;
-return result;
+  msg* result =  mBox->pHead->pNext;
+  //change pointers
+  mBox->pHead->pNext = mBox->pHead->pNext->pNext;
+  mBox->pHead->pNext->pPrevious = mBox->pHead;
+  return result;
 }
 
-static void pushTail( msg* m,mailbox* mBox){
+
+static void push_tail( msg* m,mailbox* mBox)
+{
   m->pNext = mBox->pTail;
   m->pPrevious = mBox->pTail->pPrevious;
   mBox->pTail->pPrevious->pNext = m;
   mBox->pTail->pPrevious = m;
 }
 
-static exception remove_from_list( list* l, listobj* o){
-listobj* current = l->pHead;
-while(current!= o){
-  current = current->pNext;
-  if(current->pTask!=NULL){
-    return FAIL;
+
+static void remove_from_list( list* l, listobj* o)
+{
+	listobj* current = l->pHead;
+	while(current!= o){
+	  current = current->pNext;
+	}
+	current->pPrevious->pNext = current->pNext;
+	current->pNext->pPrevious= current->pPrevious;
+}
+
+static void remove_running_task_from_mailbox( mailbox* mBox )
+{
+  msg* current = mBox->pHead->pNext;
+  while ( current->pBlock->pTask != RunningTask )
+  {
+    current = current->pNext;
   }
+  current->pNext->pPrevious = current->pPrevious;
+  current->pPrevious->pNext = current->pNext;
+  free(current);
 }
-current->pPrevious->pNext = current->pNext;
-current->pNext->pPrevious= current->pPrevious;
-return OK;
-
-}
-
 
 ////deprecated
 //static void add_to_list( list* l, listobj* o ) {
