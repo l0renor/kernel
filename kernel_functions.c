@@ -94,6 +94,22 @@ exception create_task( void(* body)(), uint d )
   return FAIL;
 }
 
+exception remove_mailbox( mailbox* mBox )
+{
+  //IF Mailbox is empty THEN
+  if ( number_of_messages(mBox) == 0 )
+  {
+    //Free the memory for the Mailbox
+    free(mBox->pHead);
+    free(mBox->pTail);
+    free(mBox);
+    return OK;
+  }
+  else
+  {
+    return NOT_EMPTY;
+  }
+}
 
 void terminate()
 {
@@ -245,7 +261,7 @@ static list* create_list( void )
   return l;
 }
 
-static void idle_function(void)
+static void idle_function( void )
 {
   while(1)
   {
@@ -263,6 +279,20 @@ static msg* crate_message(char *pData,exception Status)
   return m;
 
 }
+
+static uint number_of_messages( mailbox* mBox )
+{
+  uint n = 0;
+  msg* current = mBox->pHead->pNext;
+  while(current->Status != DUMMY)
+  {
+    n++;
+    current = current->pNext;
+  }
+  return n;
+}
+
+
 
 
 ////deprecated
