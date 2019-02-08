@@ -138,6 +138,11 @@ mailbox*  create_mailbox( uint nMessages, uint nDataSize)
 
 }
 
+exception send_wait( mailbox* mBox, void* pData )
+{
+  
+}
+
 // Timing 
 
 void TimerInt(void)
@@ -185,7 +190,8 @@ void sorted_insert(list* l, listobj* o)
     l->pHead->pNext = o;
     l->pTail->pPrevious = o;
   }
-  // SPECIAL CASE: New object has lower deadline than first in list.
+  // SPECIAL CASE: New object has lower deadline than 
+  in list.
   else if (o->pTask->DeadLine < first->pTask->DeadLine)
   { 
     o->pNext = first;
