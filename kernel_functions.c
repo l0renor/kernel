@@ -169,19 +169,41 @@ exception send_wait( mailbox* mBox, void* pData )
       if(mBox->nBlockedMsg < 0){//reciving tasks waiting
         msg* m = popHead(mBox);
         //copy senders data into reciver
-        m->pData = (char*)calloc(1,sizeof(mBox->nDataSize));
-        //todo free data?;
-        //m->pBlock
+        memcpy(m->pData,pData,mBox->nDataSize);
+        
+        
+        exception remove = remove_from_list( blocked_list, m->pBlock);
+        sorted_insert( ready_list, m->pBlock);
+        //todo swich running task somewhere 
+        if(remove == 0){
+          return 0;
+        }  
         free(m);
-        
-        
-        
-        
       
       }
-      //Copy senders data into data area of recivers message
+      else
+      {
+      msg* newM = (msg *)calloc(1,sizeof(msg));
+      newM->pData = pData;
+      push_tail(newM,mBox);
+      remove_from_list(ready_list,ready_list->pHead->pNext);
+      }
+      LoadContext();
       
       
+    }else//not first excecution
+    {
+      if(deadline()<=0)
+        {
+          isr_off();
+          remove_running_task_from_mailbox(mBox);
+          return DEADLINE_REACHED;
+        }
+      else
+      {
+        //IS pepsi 
+        return OK;
+      }
     }
   }
   
@@ -317,17 +339,24 @@ mBox->pHead->pNext->pPrevious = mBox->pHead;
 return result;
 }
 
-static void pushtail( msg* m,mailbox* mBox){
+static void pushTail( msg* m,mailbox* mBox){
   m->pNext = mBox->pTail;
   m->pPrevious = mBox->pTail->pPrevious;
   mBox->pTail->pPrevious->pNext = m;
   mBox->pTail->pPrevious = m;
 }
 
-static void     remove_from_list( list* l, listobj* o){
+static exception remove_from_list( list* l, listobj* o){
 listobj* current = l->pHead;
 while(current!= o){
-} 
+  current = current->pNext;
+  if(current->pTask!=NULL){
+    return FAIL;
+  }
+}
+current->pPrevious->pNext = current->pNext;
+current->pNext->pPrevious= current->pPrevious;
+return OK;
 
 }
 

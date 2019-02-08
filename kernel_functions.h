@@ -50,7 +50,7 @@ typedef struct
 
 // Message items
 typedef struct msgobj {
-        char            *pData;
+        void            *pData;
         exception       Status;
         struct l_obj    *pBlock;
         struct msgobj   *pPrevious;
@@ -128,6 +128,6 @@ static void     idle_function( void );
 static void     schedule(void);
 static msg* 	create_message(char *pData, exception Status);
 static msg* 	popHead(mailbox* mBox);
-static void     pushtail( msg* m,mailbox* mBox);
-static void     remove_from_list( list* l, listobj* o);
+static void     pushTail( msg* m,mailbox* mBox);
+static exception  remove_from_list( list* l, listobj* o);
 
