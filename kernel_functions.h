@@ -102,7 +102,7 @@ exception       send_wait( mailbox* mBox, void* pData );
 exception       receive_wait( mailbox* mBox, void* pData );
 
 exception	send_no_wait( mailbox* mBox, void* pData );
-int             receive_no_wait( mailbox* mBox, void* pData );
+exception       receive_no_wait( mailbox* mBox, void* pData );
 
 
 // Timing
@@ -125,7 +125,6 @@ static void     sorted_insert( list* l, listobj* o );
 static listobj* create_listobj( TCB* t );
 static list*    create_list( void );
 static void     idle_function( void );
-static uint     number_of_messages( mailbox* mBox );
 static void     schedule(void);
 static msg* 	create_message(char *pData,exception Status);
 

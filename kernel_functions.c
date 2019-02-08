@@ -94,23 +94,6 @@ exception create_task( void(* body)(), uint d )
   return FAIL;
 }
 
-exception remove_mailbox( mailbox* mBox )
-{
-  //IF Mailbox is empty THEN
-  if ( number_of_messages(mBox) == 0 )
-  {
-    //Free the memory for the Mailbox
-    free(mBox->pHead);
-    free(mBox->pTail);
-    free(mBox);
-    return OK;
-  }
-  else
-  {
-    return NOT_EMPTY;
-  }
-}
-
 void terminate()
 {
   //remove from readyList
@@ -139,8 +122,10 @@ void run( void )
   //Load context
   LoadContext();
 }
-//IPC
-mailbox*  create_mailbox( uint nMessages, uint nDataSize)
+
+// Communication
+
+mailbox* create_mailbox( uint nMessages, uint nDataSize)
 {
   mailbox *result = (mailbox*)calloc(1,sizeof(mailbox));
   result->nDataSize = nDataSize;
@@ -153,6 +138,67 @@ mailbox*  create_mailbox( uint nMessages, uint nDataSize)
   return result;
 
 }
+
+exception remove_mailbox( mailbox* mBox )
+{
+  //IF Mailbox is empty THEN
+  if ( number_of_messages(mBox) == 0 )
+  {
+    //Free the memory for the Mailbox
+    free(mBox->pHead);
+    free(mBox->pTail);
+    free(mBox);
+    return OK;
+  }
+  else
+  {
+    return NOT_EMPTY;
+  }
+}
+
+exception receive_wait( mailbox* mBox, void* pData )
+{
+  static bool is_first_execution = TRUE;
+  //Disable interrupt
+  isr_off();
+  //Save context
+  SaveContext();
+  //IF first execution THEN
+  if ( is_first_execution == TRUE )
+  {
+    //SET "not first execution any more"
+    is_first_execution = FALSE;
+    //IF send Message is waiting THEN
+    if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0)
+    {
+      msg* sender = popHead(mBox
+      //Copy sender's data to receiving task's data area
+      
+      //Remove sending task's message struct from the Mailbox
+      //IF Message was of wait type THEN
+        //Move sending task to Ready list
+      //ELSE
+        //Free senders data area
+      //ENDIF
+    //ELSE 
+      //Allocate a Message structure
+      //Add Message to the Mailbox
+      //Move receiving task from Readylist to Waitinglist
+    //ENDIF
+    //Load context
+  //ELSE
+    //IF deadline is reached THEN
+      //Disable interrupt
+      //Remove receive Message
+      //Enable interrupt
+      //Return DEADLINE_REACHED
+    //ELSE
+      //Return OK
+    //ENDIF
+  //ENDIF
+}
+
+
 
 // Timing 
 
@@ -271,21 +317,7 @@ static msg* crate_message(char *pData,exception Status)
   m->pPrevious = NULL;
   m->pNext = NULL;
   return m;
-
 }
-
-static uint number_of_messages( mailbox* mBox )
-{
-  uint n = 0;
-  msg* current = mBox->pHead->pNext;
-  while(current->Status != DUMMY)
-  {
-    n++;
-    current = current->pNext;
-  }
-  return n;
-}
-
 
 
 
