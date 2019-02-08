@@ -24,8 +24,6 @@
 #define SENDER          +1
 #define DUMMY           0
 #define RECEIVER        -1
-#define DUMMY           0
-
 
 typedef int             exception;
 typedef int             bool;
@@ -50,7 +48,7 @@ typedef struct
 
 // Message items
 typedef struct msgobj {
-        char            *pData;
+        void            *pData;
         exception       Status;
         struct l_obj    *pBlock;
         struct msgobj   *pPrevious;
@@ -127,7 +125,8 @@ static list*    create_list( void );
 static void     idle_function( void );
 static void     schedule(void);
 static msg* 	create_message(char *pData, exception Status);
-static msg* 	popHead(mailbox* mBox);
-static void     pushtail( msg* m,mailbox* mBox);
+static msg* 	pop_head(mailbox* mBox);
+static void     push_tail( msg* m,mailbox* mBox);
 static void     remove_from_list( list* l, listobj* o);
+static void     remove_running_task_from_mailbox( mailbox* mBox );
 
