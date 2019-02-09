@@ -3,6 +3,7 @@
 /*********************************************************/
 
 #include <stdlib.h>
+#include <string.h>
 
 #define CONTEXT_SIZE    13  /* for the 13 general purpose registers: r0 to r12 */ 
 #define STACK_SIZE      100 /* 100  about enough space*/
@@ -125,8 +126,8 @@ static list*    create_list( void );
 static void     idle_function( void );
 static void     schedule(void);
 static msg* 	create_message(char *pData, exception Status);
-static msg* 	pop_head(mailbox* mBox);
-static void     push_tail( msg* m,mailbox* mBox);
+static msg* 	pop_mailbox_head( mailbox* mBox );
+static void     push_mailbox_tail( mailbox* mBox,msg* m);
 static void     remove_from_list( list* l, listobj* o);
 static void     remove_running_task_from_mailbox( mailbox* mBox );
 

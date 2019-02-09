@@ -136,13 +136,13 @@ mailbox* create_mailbox( uint nMessages, uint nDataSize)
   result->pHead->pNext = result->pTail;
   result->pTail->pPrevious = result->pHead;
   return result;
-
+  
 }
 
 exception remove_mailbox( mailbox* mBox )
 {
   //IF Mailbox is empty THEN
-  if ( number_of_messages(mBox) == 0 )
+  if ( mBox->nMessages == 0 )
   {
     //Free the memory for the Mailbox
     free(mBox->pHead);
@@ -169,9 +169,9 @@ exception receive_wait( mailbox* mBox, void* pData )
     //SET "not first execution any more"
     is_first_execution = FALSE;
     //IF send Message is waiting THEN
-    if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0)
+    if (mBox->nMessages > 0 && mBox->nBlockedMsg >= 0)
     {
-      msg* sender = popHead(mBox);
+      msg* sender = pop_mailbox_head(mBox);
       mBox->nMessages--;
       mBox->nBlockedMsg--;
       //Copy sender's data to receiving task's data area
@@ -191,10 +191,11 @@ exception receive_wait( mailbox* mBox, void* pData )
       //Allocate a Message structure
       msg* message = ( msg* ) calloc( 1, sizeof( msg ) );
       //Add Message to the Mailbox
-      push_tail(mBox, msg);
+      push_mailbox_tail(mBox, message);
       //Move receiving task from Readylist to Waitinglist
-      remove_from_list(ready_list, RunningTask);
-      sorted_insert(blocked_list, RunningTask);
+      listobj* runningTaskObject = ready_list->pHead->pNext;
+      remove_from_list(ready_list, runningTaskObject);
+      sorted_insert(blocked_list, runningTaskObject);
     }
     LoadContext();
   }
@@ -217,6 +218,7 @@ exception receive_wait( mailbox* mBox, void* pData )
       return OK;
     }
   }
+  return DEADLINE_REACHED;//make compiler happy
 }
 
 
@@ -225,57 +227,57 @@ exception receive_wait( mailbox* mBox, void* pData )
 exception send_wait( mailbox* mBox, void* pData )
 {
   static bool is_first_execution = TRUE;
-    //Disable interrupts
-    isr_off();
-    //Save context
-    SaveContext();
-    //IF "first execution" THEN
-    if ( is_first_execution == TRUE )
+  //Disable interrupts
+  isr_off();
+  //Save context
+  SaveContext();
+  //IF "first execution" THEN
+  if ( is_first_execution == TRUE )
+  {
+    //Set: "not first execution any more"
+    is_first_execution = FALSE;
+    if(mBox->nBlockedMsg < 0)
     {
-      //Set: "not first execution any more"
-      is_first_execution = FALSE;
-      if(mBox->nBlockedMsg < 0){//reciving tasks waiting
-        msg* m = popHead(mBox);
-        //copy senders data into reciver
-        memcpy(m->pData,pData,mBox->nDataSize);
-        
-        
-        exception remove = remove_from_list( blocked_list, m->pBlock);
-        sorted_insert( ready_list, m->pBlock);
-        //todo swich running task somewhere 
-        if(remove == 0){
-          return 0;
-        }  
-        free(m);
+      //receiving tasks waiting
+      msg* m = pop_mailbox_head(mBox);
+      //copy senders data into reciver
+      memcpy(m->pData,pData,mBox->nDataSize);
       
-      }
-      else
-      {
+      
+      remove_from_list( blocked_list, m->pBlock);
+      sorted_insert( ready_list, m->pBlock);
+      //todo swich running task somewhere 
+      free(m);
+      
+    }
+    else
+    {
       msg* newM = (msg *)calloc(1,sizeof(msg));
       newM->pData = pData;
-      push_tail(newM,mBox);
+      push_mailbox_tail(mBox,newM);
       remove_from_list(ready_list,ready_list->pHead->pNext);
-      }
-      LoadContext();
-      
-      
-    }else//not first excecution
+    }
+    LoadContext();
+    
+    
+  }else//not first excecution
+  {
+    if(deadline()<=0)
     {
-      if(deadline()<=0)
-        {
-          isr_off();
-          remove_running_task_from_mailbox(mBox);
-          return DEADLINE_REACHED;
-        }
-      else
-      {
-        //IS pepsi 
-        return OK;
-      }
+      isr_off();
+      remove_running_task_from_mailbox(mBox);
+      return DEADLINE_REACHED;
+    }
+    else
+    {
+      //IS pepsi 
+      return OK;
     }
   }
-  
-  
+  return DEADLINE_REACHED;//make compiler happy
+}
+
+
 
 
 // Timing 
@@ -316,7 +318,7 @@ void insertion_sort(list* l)
 void sorted_insert(list* l, listobj* o)
 { 
   listobj* first = l->pHead->pNext; /* skip head */
-
+  
   // SPECIAL CASE: Empty List.
   if (first->pTask == NULL) /* check for tail */
   {
@@ -397,17 +399,17 @@ static msg* create_message(char *pData,exception Status)
   return m;
 }
 
-static msg* popHead(mailbox* mBox)
+static msg* pop_mailbox_head(mailbox* mBox)
 {
   msg* result =  mBox->pHead->pNext;
   //change pointers
-  mBox->pHead->pNext = mBox->pHead->pNext->pNext;
-  mBox->pHead->pNext->pPrevious = mBox->pHead;
+  mBox->pHead->pNext = result->pNext;
+  result->pPrevious = mBox->pHead;
   return result;
 }
 
 
-static void push_tail( msg* m,mailbox* mBox)
+static void push_mailbox_tail( mailbox* mBox,msg* m)
 {
   m->pNext = mBox->pTail;
   m->pPrevious = mBox->pTail->pPrevious;
@@ -418,12 +420,12 @@ static void push_tail( msg* m,mailbox* mBox)
 
 static void remove_from_list( list* l, listobj* o)
 {
-	listobj* current = l->pHead;
-	while(current!= o){
-	  current = current->pNext;
-	}
-	current->pPrevious->pNext = current->pNext;
-	current->pNext->pPrevious= current->pPrevious;
+  listobj* current = l->pHead;
+  while(current!= o){
+    current = current->pNext;
+  }
+  current->pPrevious->pNext = current->pNext;
+  current->pNext->pPrevious= current->pPrevious;
 }
 
 static void remove_running_task_from_mailbox( mailbox* mBox )
