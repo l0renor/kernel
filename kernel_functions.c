@@ -179,12 +179,15 @@ exception receive_wait( mailbox* mBox, void* pData )
       //IF Message was of wait type THEN
       if ( sender->pBlock != NULL )
       {
-        //Move sending task to Ready list
+        remove_from_list(blocked_list, sender->pBlock);
+        sorted_insert(ready_list, sender->pBlock);
       }
       else 
       {
-        //Free senders data area
+        void* p = realloc(sender->pData, mBox->nDataSize);
+        free(p);
       }
+      free(sender);
     }
     else
     { 
