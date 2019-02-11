@@ -326,6 +326,19 @@ exception receive_no_wait( mailbox* mBox, void* pData )
 
 // Timing 
 
+uint ticks( void )
+{
+  //Return the tick counter
+  //TODO
+}
+
+uint deadline( void )
+{
+  //Return the deadline of the current task
+  return RunningTask->Deadline;
+}
+
+
 void set_deadline( uint deadline )
 {
   static bool is_first_execution = TRUE;
