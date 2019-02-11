@@ -326,6 +326,27 @@ exception receive_no_wait( mailbox* mBox, void* pData )
 
 // Timing 
 
+void set_deadline( uint deadline )
+{
+  static bool is_first_execution = TRUE;
+  //Disable interrupt
+  isr_off();
+  //Save context
+  SaveContext();
+  //IF first execution THEN
+  if ( is_first_execution )
+  {
+    //Set: "not first execution any more"
+    is_first_execution = FALSE;
+    //Set the deadline field in the calling TCB.
+    RunningTask->DeadLine = deadline;
+    //Reschedule Readylist
+    insertion_sort(ready_list);
+    //Load context
+    LoadContext();
+  }
+}
+
 void TimerInt(void)
 {
   static unsigned int ticks, first = 1;
