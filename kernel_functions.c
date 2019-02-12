@@ -10,12 +10,12 @@ extern void __get_PSP_from_TCB(void);
 
 int init_kernel( void )
 {
-  in_startup = TRUE;
+  KernelMode = INIT;
   TimerInt();
   ReadyList = create_list();
-  blocked_list = create_list();
-  sleep_list = create_list();
-  if(sleep_list == NULL || ready_list == NULL || blocked_list == NULL){
+  WaitingList = create_list();
+  TimerList = create_list();
+  if(TimerList == NULL || ReadyList == NULL || WaitingList == NULL){
     return FAIL;
   }
   
@@ -54,12 +54,12 @@ exception create_task( void(* body)(), uint d )
   pTCB->SP = &( pTCB->StackSeg[STACK_SIZE-9] );
   
   //IF start-up mode THEN
-  if ( in_startup )
+  if (KernelMode)
   {
     //Create ListObj for TCB
     listobj* o = create_listobj(pTCB);
     //Insert new task in Readylist
-    sorted_insert(ready_list, o);
+    sorted_insert(ReadyList, o);
     //Return status
     return OK;
   }
@@ -79,7 +79,7 @@ exception create_task( void(* body)(), uint d )
       //Create ListObj for TCB
       listobj* o = create_listobj(pTCB);
       //Insert new task in Readylist
-      sorted_insert(ready_list, o);
+      sorted_insert(ReadyList, o);
       
       //Load Context
       LoadContext();
@@ -92,13 +92,13 @@ exception create_task( void(* body)(), uint d )
 void terminate()
 {
   //remove from readyList
-  listobj *toDelObject = ready_list->pHead->pNext;
+  listobj *toDelObject = ReadyList->pHead->pNext;
   TCB   *toDelTCB = toDelObject->pTask;
-  ready_list->pHead->pNext =  ready_list->pHead->pNext->pNext;
-  ready_list->pHead->pNext->pNext->pPrevious = ready_list->pHead->pNext;
+  ReadyList->pHead->pNext =  ReadyList->pHead->pNext->pNext;
+  ReadyList->pHead->pNext->pNext->pPrevious = ReadyList->pHead->pNext;
   //Set running task
-  insertion_sort(ready_list);
-  RunningTask = ready_list->pHead->pNext->pTask;
+  insertion_sort(ReadyList);
+  RunningTask = ReadyList->pHead->pNext->pTask;
   //Delete old task
   free(toDelTCB);
   free(toDelObject);
@@ -111,7 +111,7 @@ void run( void )
   //Initialize interrupt timer
   
   //Set the kernel in running mode
-  in_startup = FALSE;
+  KernelMode = RUNNING;
   //Enable interrupts
   isr_on();
   //Load context
@@ -174,8 +174,8 @@ exception receive_wait( mailbox* mBox, void* pData )
       //IF Message was of wait type THEN
       if ( sender->pBlock != NULL )
       {
-        remove_from_list(blocked_list, sender->pBlock);
-        sorted_insert(ready_list, sender->pBlock);
+        remove_from_list(WaitingList, sender->pBlock);
+        sorted_insert(ReadyList, sender->pBlock);
       }
       else 
       {
@@ -191,9 +191,9 @@ exception receive_wait( mailbox* mBox, void* pData )
       //Add Message to the Mailbox
       push_mailbox_tail(mBox, message);
       //Move receiving task from Readylist to Waitinglist
-      listobj* runningTaskObject = ready_list->pHead->pNext;
-      remove_from_list(ready_list, runningTaskObject);
-      sorted_insert(blocked_list, runningTaskObject);
+      listobj* runningTaskObject = ReadyList->pHead->pNext;
+      remove_from_list(ReadyList, runningTaskObject);
+      sorted_insert(WaitingList, runningTaskObject);
     }
     LoadContext();
   }
@@ -242,10 +242,13 @@ exception send_wait( mailbox* mBox, void* pData )
       memcpy(m->pData,pData,mBox->nDataSize);
       
       
-      remove_from_list( blocked_list, m->pBlock);
-      sorted_insert( ready_list, m->pBlock);
-      //todo swich running task somewhere 
+      remove_from_list( WaitingList, m->pBlock);
+      sorted_insert( ReadyList, m->pBlock);
+      //@TODO swich running task somewhere 
       free(m);
+      mBox->nMessages = mBox->nMessages - 1;
+      mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
+      
       
     }
     else
@@ -253,7 +256,13 @@ exception send_wait( mailbox* mBox, void* pData )
       msg* newM = (msg *)calloc(1,sizeof(msg));
       newM->pData = pData;
       push_mailbox_tail(mBox,newM);
-      remove_from_list(ready_list,ready_list->pHead->pNext);
+      remove_from_list(ReadyList,ReadyList->pHead->pNext);
+      mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
+      if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
+        pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
+      }else{
+        mBox->nMessages = mBox->nMessages + 1;
+      }
     }
     LoadContext();
     
@@ -264,6 +273,8 @@ exception send_wait( mailbox* mBox, void* pData )
     {
       isr_off();
       remove_running_task_from_mailbox(mBox);
+      mBox->nMessages = mBox->nMessages -1;
+      isr_on();
       return DEADLINE_REACHED;
     }
     else
@@ -274,6 +285,46 @@ exception send_wait( mailbox* mBox, void* pData )
   }
   return DEADLINE_REACHED;//make compiler happy
 }
+
+
+exception send_no_wait( mailbox* mBox, void* pData )
+{
+  static bool is_first_execution = TRUE;
+  if ( is_first_execution == TRUE )
+  {
+    is_first_execution = FALSE;
+    if(mBox->nBlockedMsg < 0)
+    {
+      //receiving tasks waiting
+      msg* m = pop_mailbox_head(mBox);
+      //copy senders data into reciver
+      memcpy(m->pData,pData,mBox->nDataSize);
+      
+      
+      remove_from_list( WaitingList, m->pBlock);
+      sorted_insert( ReadyList, m->pBlock);
+      //todo swich running task somewhe
+      
+      free(m);
+      LoadContext();
+      
+    }
+    else
+    {
+      msg* newM = (msg *)calloc(1,sizeof(msg));
+      newM->pData = pData;
+      if(mBox->nMessages == mBox->nMaxMessages)//Box is full
+      {
+        msg* oldM = pop_mailbox_head(mBox);
+        free(oldM);
+      }
+      push_mailbox_tail(mBox,newM);
+    }
+    
+  }
+  return OK;
+}
+
 
 exception receive_no_wait( mailbox* mBox, void* pData )
 {
@@ -300,8 +351,8 @@ exception receive_no_wait( mailbox* mBox, void* pData )
       //IF Message was of wait type THEN
       if ( sender->pBlock != NULL )
       {
-        remove_from_list(blocked_list, sender->pBlock);
-        sorted_insert(ready_list, sender->pBlock);
+        remove_from_list(WaitingList, sender->pBlock);
+        sorted_insert(ReadyList, sender->pBlock);
       }
       else 
       {
@@ -316,6 +367,7 @@ exception receive_no_wait( mailbox* mBox, void* pData )
   //Return status on received message
   return message_received;
 }
+
 
 
 
@@ -349,7 +401,7 @@ void set_deadline( uint deadline )
     //Set the deadline field in the calling TCB.
     RunningTask->DeadLine = deadline;
     //Reschedule Readylist
-    insertion_sort(ready_list);
+    insertion_sort(ReadyList);
     //Load context
     LoadContext();
   }
@@ -367,6 +419,33 @@ void TimerInt(void)
   {
     ticks = ticks + 1;
   }
+}
+
+exception wait( uint nTicks ){
+  isr_off();
+  SaveContext();
+  exception status;
+  static bool is_first_execution = TRUE;
+  if ( is_first_execution == TRUE )
+  {
+    is_first_execution = FALSE;
+    listobj* running = ReadyList->pHead->pNext;
+    remove_from_list(ReadyList,running);
+    sorted_insert(TimerList,running);
+    LoadContext();
+    
+  } else {//not first execution
+    if(deadline()<=0)
+    {
+      isr_off();
+      status = DEADLINE_REACHED;
+    }
+    else
+    {
+      status = OK;
+    }
+  }
+  return status;
 }
 
 // Own helper functions
