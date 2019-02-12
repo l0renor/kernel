@@ -246,8 +246,11 @@ exception send_wait( mailbox* mBox, void* pData )
       
       remove_from_list( blocked_list, m->pBlock);
       sorted_insert( ready_list, m->pBlock);
-      //todo swich running task somewhere 
+      //@TODO swich running task somewhere 
       free(m);
+      mBox->nMessages = mBox->nMessages - 1;
+      mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
+      
       
     }
     else
@@ -256,6 +259,12 @@ exception send_wait( mailbox* mBox, void* pData )
       newM->pData = pData;
       push_mailbox_tail(mBox,newM);
       remove_from_list(ready_list,ready_list->pHead->pNext);
+      mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
+      if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
+        pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
+      }else{
+        mBox->nMessages = mBox->nMessages + 1;
+      }
     }
     LoadContext();
     
@@ -266,6 +275,8 @@ exception send_wait( mailbox* mBox, void* pData )
     {
       isr_off();
       remove_running_task_from_mailbox(mBox);
+      mBox->nMessages = mBox->nMessages -1;
+      isr_on();
       return DEADLINE_REACHED;
     }
     else
@@ -277,7 +288,43 @@ exception send_wait( mailbox* mBox, void* pData )
   return DEADLINE_REACHED;//make compiler happy
 }
 
-
+exception send_no_wait( mailbox* mBox, void* pData )
+{
+  static bool is_first_execution = TRUE;
+  if ( is_first_execution == TRUE )
+  {
+    is_first_execution = FALSE;
+    if(mBox->nBlockedMsg < 0)
+    {
+      //receiving tasks waiting
+      msg* m = pop_mailbox_head(mBox);
+      //copy senders data into reciver
+      memcpy(m->pData,pData,mBox->nDataSize);
+      
+      
+      remove_from_list( blocked_list, m->pBlock);
+      sorted_insert( ready_list, m->pBlock);
+      //todo swich running task somewhe
+      
+      free(m);
+      LoadContext();
+      
+    }
+    else
+    {
+      msg* newM = (msg *)calloc(1,sizeof(msg));
+      newM->pData = pData;
+      if(mBox->nMessages == mBox->nMaxMessages)//Box is full
+      {
+        msg* oldM = pop_mailbox_head(mBox);
+        free(oldM);
+      }
+      push_mailbox_tail(mBox,newM);
+    }
+    
+  }
+  return OK;
+}
 
 
 // Timing 
@@ -294,6 +341,33 @@ void TimerInt(void)
   {
     ticks = ticks + 1;
   }
+}
+
+exception wait( uint nTicks ){
+  isr_off();
+  SaveContext();
+  exception status;
+  static bool is_first_execution = TRUE;
+  if ( is_first_execution == TRUE )
+  {
+    is_first_execution = FALSE;
+    listobj* running = ready_list->pHead->pNext;
+    remove_from_list(ready_list,running);
+    sorted_insert(sleep_list,running);
+    LoadContext();
+    
+  } else {//not first execution
+    if(deadline()<=0)
+    {
+      isr_off();
+      status = DEADLINE_REACHED;
+    }
+    else
+    {
+      status = OK;
+    }
+  }
+  return status;
 }
 
 // Own helper functions
