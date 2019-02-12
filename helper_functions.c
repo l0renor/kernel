@@ -68,7 +68,6 @@ static listobj* create_listobj( TCB* t )
 
 static list* create_list( void )
 {
-  isr_off();
   list* l = ( list* ) calloc( 1, sizeof( list ) );
   if(l != NULL)
   {
@@ -77,7 +76,6 @@ static list* create_list( void )
     l->pHead->pNext = l->pTail;
     l->pTail->pPrevious = l->pHead;
   }
-  isr_on();
   return l;
 }
 
@@ -90,12 +88,14 @@ static void idle_function( void )
 }
 static msg* create_message(char *pData,exception Status)
 {
-  msg *m = (msg*)calloc(1,sizeof(msg));
-  m->pData = pData;
-  m->Status = Status;
-  m->pBlock = NULL;
-  m->pPrevious = NULL;
-  m->pNext = NULL;
+  msg *m = ( msg* ) calloc( 1, sizeof( msg ) );
+  if ( m != NULL ) {
+    m->pData = pData;
+    m->Status = Status;
+    m->pBlock = NULL;
+    m->pPrevious = NULL;
+    m->pNext = NULL;
+  }
   return m;
 }
 

@@ -1,4 +1,4 @@
-int     Ticks;          /* global sys tick counter */
+uint    Ticks;          /* global sys tick counter */
 int     KernelMode;     /* can equal either INIT or RUNNING */
 TCB*    RunningTask;
 list*   ReadyList;
