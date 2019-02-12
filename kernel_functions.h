@@ -109,7 +109,7 @@ exception	wait( uint nTicks );
 void            set_ticks( uint no_of_ticks );
 uint            ticks( void );
 uint		deadline( void );
-void            set_deadline( uint nNew );
+void            set_deadline( uint deadline );
 void            TimerInt( void );
 
 // Interrupt

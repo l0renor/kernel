@@ -179,12 +179,15 @@ exception receive_wait( mailbox* mBox, void* pData )
       //IF Message was of wait type THEN
       if ( sender->pBlock != NULL )
       {
-        //Move sending task to Ready list
+        remove_from_list(blocked_list, sender->pBlock);
+        sorted_insert(ready_list, sender->pBlock);
       }
       else 
       {
-        //Free senders data area
+        void* p = realloc(sender->pData, mBox->nDataSize);
+        free(p);
       }
+      free(sender);
     }
     else
     { 
@@ -232,7 +235,7 @@ exception send_wait( mailbox* mBox, void* pData )
   //Save context
   SaveContext();
   //IF "first execution" THEN
-  if ( is_first_execution == TRUE )
+  if ( is_first_execution )
   {
     //Set: "not first execution any more"
     is_first_execution = FALSE;
@@ -288,6 +291,7 @@ exception send_wait( mailbox* mBox, void* pData )
   return DEADLINE_REACHED;//make compiler happy
 }
 
+
 exception send_no_wait( mailbox* mBox, void* pData )
 {
   static bool is_first_execution = TRUE;
@@ -327,7 +331,86 @@ exception send_no_wait( mailbox* mBox, void* pData )
 }
 
 
+exception receive_no_wait( mailbox* mBox, void* pData )
+{
+  static bool is_first_execution = TRUE;
+  //Disable interrupt
+  isr_off();
+  //Save context
+  SaveContext();
+  //IF first execution THEN
+  if ( is_first_execution )
+  {
+    //Set: "not first execution any more"
+    is_first_execution = FALSE;
+    static exception message_received = FAIL;
+    //IF send Message is waiting THEN
+    if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )
+    {
+      message_received = OK;
+      msg* sender = pop_mailbox_head(mBox);
+      mBox->nMessages--;
+      mBox->nBlockedMsg--;
+      //Copy sender's data to receiving task's data area
+      memcpy(pData, sender->pData, mBox->nDataSize);
+      //IF Message was of wait type THEN
+      if ( sender->pBlock != NULL )
+      {
+        remove_from_list(blocked_list, sender->pBlock);
+        sorted_insert(ready_list, sender->pBlock);
+      }
+      else 
+      {
+        void* p = realloc(sender->pData, mBox->nDataSize);
+        free(p);
+      }
+      free(sender);
+    }
+    //Load context
+    LoadContext();
+  }
+  //Return status on received message
+  return message_received;
+}
+
+
+
+
 // Timing 
+
+uint ticks( void )
+{
+  //Return the tick counter
+  //TODO
+}
+
+uint deadline( void )
+{
+  //Return the deadline of the current task
+  return RunningTask->Deadline;
+}
+
+
+void set_deadline( uint deadline )
+{
+  static bool is_first_execution = TRUE;
+  //Disable interrupt
+  isr_off();
+  //Save context
+  SaveContext();
+  //IF first execution THEN
+  if ( is_first_execution )
+  {
+    //Set: "not first execution any more"
+    is_first_execution = FALSE;
+    //Set the deadline field in the calling TCB.
+    RunningTask->DeadLine = deadline;
+    //Reschedule Readylist
+    insertion_sort(ready_list);
+    //Load context
+    LoadContext();
+  }
+}
 
 void TimerInt(void)
 {
