@@ -74,54 +74,25 @@ void TimerInt(void)
   listobj* current = TimerList->pHead->pNext;
   while(current->pTask!=NULL)
   {
-    if(current->pTask->Deadline - ticks() <= 0){//deadline reached 
-      remove_from_list( TimerList,current->pTask);
-      sorted_insert(ReadyList,current->pTask);
-      current=current->next;
+    if(current->pTask->DeadLine - ticks() <= 0){//deadline reached 
+      remove_from_list( TimerList,current);
+      sorted_insert(ReadyList,current);
+      current=current->pNext;
     }
     
   }
  //check WaitingList
-  listobj* current = WaitingList->pHead->pNext;
+  current = WaitingList->pHead->pNext;
   while(current->pTask!=NULL)
   {
-    if(current->pTask->Deadline - ticks() <= 0){//deadline reached 
-      remove_from_list(WaitingList,current->pTask);
-      sorted_insert(ReadyList,current->pTask);
-      current=current->next;
+    if(current->pTask->DeadLine - ticks() <= 0){//deadline reached 
+      remove_from_list(WaitingList,current);
+      sorted_insert(ReadyList,current);
+      current=current->pNext;
       //TODO clean up mailbox
     }
     
   }
 }
 
-exception wait( uint nTicks ){
-  isr_off();
-  SaveContext();
-  exception status;
-  static bool is_first_execution = TRUE;
-  if ( is_first_execution == TRUE )
-  {
-    is_first_execution = FALSE;
-    listobj* running = ReadyList->pHead->pNext;
-    remove_from_list(ReadyList,running);
-    sorted_insert(TimerList,running);
-    LoadContext();
-    
-  } else {//not first execution
-    if(deadline()<=0)
-    {
-      isr_off();
-      status = DEADLINE_REACHED;
-    }
-    else
-    {
-      status = OK;
-    }
-  }
-  return status;
-}
-
-
-}
 
