@@ -34,15 +34,29 @@ void set_deadline( uint deadline )
 
 void TimerInt(void)
 {
-  static unsigned int ticks, first = 1;
-  if (first == 1) 
+  Ticks++;
+  //check timerlist
+  listobj* current = TimerList->pHead->pNext;
+  while(current->pTask!=NULL)
   {
-    first = 0; 
-    ticks = 1;
+    if(current->pTask->Deadline - ticks() <= 0){//deadline reached 
+      remove_from_list( TimerList,current->pTask);
+      sorted_insert(ReadyList,current->pTask);
+      current=current->next;
+    }
+    
   }
-  else 
+ //check WaitingList
+  listobj* current = WaitingList->pHead->pNext;
+  while(current->pTask!=NULL)
   {
-    ticks = ticks + 1;
+    if(current->pTask->Deadline - ticks() <= 0){//deadline reached 
+      remove_from_list(WaitingList,current->pTask);
+      sorted_insert(ReadyList,current->pTask);
+      current=current->next;
+      //TODO clean up mailbox
+    }
+    
   }
 }
 
@@ -72,3 +86,4 @@ exception wait( uint nTicks ){
   }
   return status;
 }
+
