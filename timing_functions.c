@@ -4,20 +4,19 @@ exception wait( uint nTicks )
   SaveContext();
   exception status;
   static bool is_first_execution = TRUE;
-  if ( is_first_execution == TRUE )
+  if ( is_first_execution )
   {
     is_first_execution = FALSE;
     listobj* running = ReadyList->pHead->pNext;
     remove_from_list(ReadyList,running);
+    running->nTCnt = nTicks;
     sorted_insert(TimerList,running);
     LoadContext();
-    
   } 
   else 
   {
     if ( deadline() - ticks() <= 0 )
     {
-      isr_off();
       status = DEADLINE_REACHED;
     }
     else
@@ -67,32 +66,45 @@ void set_deadline( uint deadline )
   }
 }
 
-void TimerInt(void)
+void TimerInt( void )
 {
   Ticks++;
-  //check timerlist
+  
+  // check TimerList
   listobj* current = TimerList->pHead->pNext;
-  while(current->pTask!=NULL)
+  while ( current->pTask != NULL )
   {
-    if(current->pTask->DeadLine - ticks() <= 0){//deadline reached 
+    // IF Deadline is reached 
+    if(current->pTask->DeadLine - ticks() <= 0)
+    {
       remove_from_list( TimerList,current);
       sorted_insert(ReadyList,current);
-      current=current->pNext;
     }
-    
+    current=current->pNext;
   }
- //check WaitingList
+  
+  // check WaitingList
   current = WaitingList->pHead->pNext;
-  while(current->pTask!=NULL)
+  while ( current->pTask != NULL )
   {
-    if(current->pTask->DeadLine - ticks() <= 0){//deadline reached 
-      remove_from_list(WaitingList,current);
-      sorted_insert(ReadyList,current);
-      current=current->pNext;
-      //TODO clean up mailbox
+    // IF element still has to wait
+    if ( current->nTCnt > 1 )
+    {
+      current->nTCnt--;
     }
-    
+    else
+    {
+      remove_from_list(WaitingList, current);
+      current->nTCnt = 0;
+      msg* previous = current->pMessage->pPrevious;
+      msg* next = current->pMessage->pNext;
+      next->pPrevious = previous;
+      previous->pNext = next;
+      free(current->pMessage);
+      sorted_insert(ReadyList, current);
+    }
   }
+  schedule();
 }
 
 

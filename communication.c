@@ -35,6 +35,71 @@ exception remove_mailbox( mailbox* mBox )
   }
 }
 
+exception send_wait( mailbox* mBox, void* pData )
+{
+  static bool is_first_execution = TRUE;
+  //Disable interrupts
+  isr_off();
+  //Save context
+  SaveContext();
+  //IF "first execution" THEN
+  if ( is_first_execution )
+  {
+    //Set: "not first execution any more"
+    is_first_execution = FALSE;
+    if(mBox->nBlockedMsg < 0)
+    {
+      //receiving tasks waiting
+      msg* m = pop_mailbox_head(mBox);
+      //copy senders data into reciver
+      memcpy(m->pData,pData,mBox->nDataSize);
+      
+      
+      remove_from_list( WaitingList, m->pBlock);
+      sorted_insert( ReadyList, m->pBlock);
+      //@TODO swich running task somewhere 
+      free(m);
+      mBox->nMessages = mBox->nMessages - 1;
+      mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
+      
+      
+    }
+    else
+    {
+      msg* newM = (msg *)calloc(1,sizeof(msg));
+      newM->pData = pData;
+      push_mailbox_tail(mBox,newM);
+      remove_from_list(ReadyList,ReadyList->pHead->pNext);
+      mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
+      if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
+        pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
+      }else{
+        mBox->nMessages = mBox->nMessages + 1;
+      }
+    }
+    LoadContext();
+    
+    
+  }
+  else 
+  {
+    if( deadline() - ticks() <= 0 )
+    {
+      isr_off();
+      remove_running_task_from_mailbox(mBox);
+      mBox->nMessages = mBox->nMessages -1;
+      isr_on();
+      return DEADLINE_REACHED;
+    }
+    else
+    {
+      //IS pepsi 
+      return OK;
+    }
+  }
+  return DEADLINE_REACHED;//make compiler happy
+}
+
 exception receive_wait( mailbox* mBox, void* pData )
 {
   static bool is_first_execution = TRUE;
@@ -103,74 +168,6 @@ exception receive_wait( mailbox* mBox, void* pData )
   return DEADLINE_REACHED;//make compiler happy
 }
 
-
-
-
-exception send_wait( mailbox* mBox, void* pData )
-{
-  static bool is_first_execution = TRUE;
-  //Disable interrupts
-  isr_off();
-  //Save context
-  SaveContext();
-  //IF "first execution" THEN
-  if ( is_first_execution )
-  {
-    //Set: "not first execution any more"
-    is_first_execution = FALSE;
-    if(mBox->nBlockedMsg < 0)
-    {
-      //receiving tasks waiting
-      msg* m = pop_mailbox_head(mBox);
-      //copy senders data into reciver
-      memcpy(m->pData,pData,mBox->nDataSize);
-      
-      
-      remove_from_list( WaitingList, m->pBlock);
-      sorted_insert( ReadyList, m->pBlock);
-      //@TODO swich running task somewhere 
-      free(m);
-      mBox->nMessages = mBox->nMessages - 1;
-      mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
-      
-      
-    }
-    else
-    {
-      msg* newM = (msg *)calloc(1,sizeof(msg));
-      newM->pData = pData;
-      push_mailbox_tail(mBox,newM);
-      remove_from_list(ReadyList,ReadyList->pHead->pNext);
-      mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
-      if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
-        pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
-      }else{
-        mBox->nMessages = mBox->nMessages + 1;
-      }
-    }
-    LoadContext();
-    
-    
-  }else//not first excecution
-  {
-    if(deadline() - ticks() <=0)
-    {
-      isr_off();
-      remove_running_task_from_mailbox(mBox);
-      mBox->nMessages = mBox->nMessages -1;
-      isr_on();
-      return DEADLINE_REACHED;
-    }
-    else
-    {
-      //IS pepsi 
-      return OK;
-    }
-  }
-  return DEADLINE_REACHED;//make compiler happy
-}
-
-
 exception send_no_wait( mailbox* mBox, void* pData )
 {
   static bool is_first_execution = TRUE;
@@ -208,7 +205,6 @@ exception send_no_wait( mailbox* mBox, void* pData )
   }
   return OK;
 }
-
 
 exception receive_no_wait( mailbox* mBox, void* pData )
 {
