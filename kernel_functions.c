@@ -2,7 +2,7 @@
 #include "globalVariables.c"
 #include <limits.h>
 #include "helper_functions.c"
-#include "time_functions.c"
+#include "timing_functions.c"
 
 extern void __save_context(void);
 extern void LoadContext(void);
