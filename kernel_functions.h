@@ -131,4 +131,5 @@ static msg* 	pop_mailbox_head( mailbox* mBox );
 static void     push_mailbox_tail( mailbox* mBox,msg* m);
 static void     remove_from_list( list* l, listobj* o);
 static void     remove_running_task_from_mailbox( mailbox* mBox );
+static void     scedule();
 

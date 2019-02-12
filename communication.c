@@ -72,12 +72,23 @@ exception receive_wait( mailbox* mBox, void* pData )
     { 
       //Allocate a Message structure
       msg* message = ( msg* ) calloc( 1, sizeof( msg ) );
+      if(message == NULL){
+        return DEADLINE_REACHED;
+      }
       //Add Message to the Mailbox
       push_mailbox_tail(mBox, message);
+      //mailbox full?
+      if(mBox->nMaxMessages == mBox->nMessages){
+        pop_mailbox_head(mBox);
+      }else{
+        mBox->nMessages++;
+      }
+      ReadyList->pHead->pNext->pMessage = message;
       //Move receiving task from Readylist to Waitinglist
       listobj* runningTaskObject = ReadyList->pHead->pNext;
       remove_from_list(ReadyList, runningTaskObject);
       sorted_insert(WaitingList, runningTaskObject);
+      
     }
     LoadContext();
   }
@@ -138,8 +149,12 @@ exception send_wait( mailbox* mBox, void* pData )
     else
     {
       msg* newM = (msg *)calloc(1,sizeof(msg));
-      newM->pData = pData;
+      if(newM == NULL){
+        return DEADLINE_REACHED;
+      }
+      newM->pData = calloc(mBox->nDataSize,sizeof(char));
       push_mailbox_tail(mBox,newM);
+      ReadyList->pHead->pNext->pMessage = newM;
       remove_from_list(ReadyList,ReadyList->pHead->pNext);
       mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
       if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
@@ -182,6 +197,7 @@ exception send_no_wait( mailbox* mBox, void* pData )
       //receiving tasks waiting
       msg* m = pop_mailbox_head(mBox);
       //copy senders data into reciver
+      
       memcpy(m->pData,pData,mBox->nDataSize);
       
       
@@ -196,7 +212,8 @@ exception send_no_wait( mailbox* mBox, void* pData )
     else
     {
       msg* newM = (msg *)calloc(1,sizeof(msg));
-      newM->pData = pData;
+      newM->pData = calloc(mBox->nDataSize,sizeof(char));
+      memcpy(newM->pData,pData,mBox->nDataSize);
       if(mBox->nMessages == mBox->nMaxMessages)//Box is full
       {
         msg* oldM = pop_mailbox_head(mBox);

@@ -139,6 +139,10 @@ static void remove_running_task_from_mailbox( mailbox* mBox )
   current->pPrevious->pNext = current->pNext;
   free(current);
 }
+static void scedule(){
+  insertion_sort(ReadyList);
+  RunningTask = ReadyList->pHead->pNext->pTask;
+}
 
 ////deprecated
 //static void add_to_list( list* l, listobj* o ) {
