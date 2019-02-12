@@ -1,7 +1,43 @@
+exception wait( uint nTicks )
+{
+  isr_off();
+  SaveContext();
+  exception status;
+  static bool is_first_execution = TRUE;
+  if ( is_first_execution == TRUE )
+  {
+    is_first_execution = FALSE;
+    listobj* running = ReadyList->pHead->pNext;
+    remove_from_list(ReadyList,running);
+    sorted_insert(TimerList,running);
+    LoadContext();
+    
+  } 
+  else 
+  {
+    if ( deadline() <= 0 )
+    {
+      isr_off();
+      status = DEADLINE_REACHED;
+    }
+    else
+    {
+      status = OK;
+    }
+  }
+  return status;
+}
+
+void set_ticks( uint nTicks )
+{
+  //Set the tick counter
+  Ticks = nTicks;
+}
+
 uint ticks( void )
 {
   //Return the tick counter
-  //TODO
+  return Ticks;
 }
 
 uint deadline( void )
@@ -9,7 +45,6 @@ uint deadline( void )
   //Return the deadline of the current task
   return RunningTask->DeadLine;
 }
-
 
 void set_deadline( uint deadline )
 {
@@ -85,5 +120,8 @@ exception wait( uint nTicks ){
     }
   }
   return status;
+}
+
+
 }
 

@@ -107,7 +107,7 @@ exception       receive_no_wait( mailbox* mBox, void* pData );
 
 // Timing
 exception	wait( uint nTicks );
-void            set_ticks( uint no_of_ticks );
+void            set_ticks( uint nTicks );
 uint            ticks( void );
 uint		deadline( void );
 void            set_deadline( uint deadline );

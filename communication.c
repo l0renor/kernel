@@ -2,16 +2,20 @@
 
 mailbox* create_mailbox( uint nMessages, uint nDataSize)
 {
+  isr_off(); /* protection of calloc */
   mailbox *result = (mailbox*)calloc(1,sizeof(mailbox));
-  result->nDataSize = nDataSize;
-  result->nMessages = nMessages;
-  result->nBlockedMsg = 0;
-  result->pHead = create_message(NULL,0);
-  result->pTail = create_message(NULL,0);
-  result->pHead->pNext = result->pTail;
-  result->pTail->pPrevious = result->pHead;
+  isr_on();
+  if ( result != NULL )
+  {
+    result->nDataSize = nDataSize;
+    result->nMessages = nMessages;
+    result->nBlockedMsg = 0;
+    result->pHead = create_message(NULL,0);
+    result->pTail = create_message(NULL,0);
+    result->pHead->pNext = result->pTail;
+    result->pTail->pPrevious = result->pHead;
+  }
   return result;
-  
 }
 
 exception remove_mailbox( mailbox* mBox )
