@@ -26,9 +26,6 @@
 #define DUMMY           0
 #define RECEIVER        -1
 
-#define INIT            1;
-#define RUNNING         0;
-
 typedef int             exception;
 typedef int             bool;
 typedef unsigned int    uint;
