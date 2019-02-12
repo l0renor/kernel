@@ -213,12 +213,13 @@ exception receive_no_wait( mailbox* mBox, void* pData )
   isr_off();
   //Save context
   SaveContext();
+  static exception message_received = FAIL;
   //IF first execution THEN
   if ( is_first_execution )
   {
     //Set: "not first execution any more"
     is_first_execution = FALSE;
-    static exception message_received = FAIL;
+    
     //IF send Message is waiting THEN
     if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )
     {

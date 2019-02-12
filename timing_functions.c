@@ -7,7 +7,7 @@ uint ticks( void )
 uint deadline( void )
 {
   //Return the deadline of the current task
-  return RunningTask->Deadline;
+  return RunningTask->DeadLine;
 }
 
 
