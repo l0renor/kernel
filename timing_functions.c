@@ -15,7 +15,7 @@ exception wait( uint nTicks )
   } 
   else 
   {
-    if ( deadline() <= 0 )
+    if ( deadline() - ticks() <= 0 )
     {
       isr_off();
       status = DEADLINE_REACHED;

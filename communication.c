@@ -83,7 +83,7 @@ exception receive_wait( mailbox* mBox, void* pData )
   }
   else
   {
-    if (deadline() <= 0)
+    if (deadline() - ticks() <= 0)
     {
       //Disable interrupt
       isr_off();
@@ -153,7 +153,7 @@ exception send_wait( mailbox* mBox, void* pData )
     
   }else//not first excecution
   {
-    if(deadline()<=0)
+    if(deadline() - ticks() <=0)
     {
       isr_off();
       remove_running_task_from_mailbox(mBox);
