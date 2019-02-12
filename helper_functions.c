@@ -140,7 +140,6 @@ static void remove_running_task_from_mailbox( mailbox* mBox )
   free(current);
 }
 static void scedule(){
-  insertion_sort(ReadyList);
   RunningTask = ReadyList->pHead->pNext->pTask;
 }
 
