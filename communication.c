@@ -37,7 +37,7 @@ exception remove_mailbox( mailbox* mBox )
 
 exception send_wait( mailbox* mBox, void* pData )
 {
-  static bool is_first_execution = TRUE;
+  static volatile bool is_first_execution = TRUE;
   //Disable interrupts
   isr_off();
   //Save context
@@ -66,7 +66,7 @@ exception send_wait( mailbox* mBox, void* pData )
       if(newM == NULL){
         return DEADLINE_REACHED;
       }
-      newM->pData = calloc(mBox->nDataSize,sizeof(char));
+      newM->pData = pData;
       push_mailbox_tail(mBox,newM);
       ReadyList->pHead->pNext->pMessage = newM;
       remove_from_list(ReadyList,ReadyList->pHead->pNext);
@@ -83,11 +83,11 @@ exception send_wait( mailbox* mBox, void* pData )
     
   }else//not first excecution
   {
-    if(deadline() - ticks() <=0)
+    if(deadline() <= ticks() )
     {
       isr_off();
       remove_running_task_from_mailbox(mBox);
-      mBox->nMessages = mBox->nMessages -1;
+      mBox->nMessages = mBox->nMessages - 1;
       isr_on();
       return DEADLINE_REACHED;
     }
@@ -102,7 +102,7 @@ exception send_wait( mailbox* mBox, void* pData )
 
 exception receive_wait( mailbox* mBox, void* pData )
 {
-  static bool is_first_execution = TRUE;
+  static volatile bool is_first_execution = TRUE;
   //Disable interrupt
   isr_off();
   //Save context
@@ -182,7 +182,7 @@ exception receive_wait( mailbox* mBox, void* pData )
 
 exception send_no_wait( mailbox* mBox, void* pData )
 {
-  static bool is_first_execution = TRUE;
+  static volatile bool is_first_execution = TRUE;
   if ( is_first_execution == TRUE )
   {
     is_first_execution = FALSE;
@@ -223,7 +223,7 @@ exception send_no_wait( mailbox* mBox, void* pData )
 
 exception receive_no_wait( mailbox* mBox, void* pData )
 {
-  static bool is_first_execution = TRUE;
+  static volatile bool is_first_execution = TRUE;
   //Disable interrupt
   isr_off();
   //Save context
