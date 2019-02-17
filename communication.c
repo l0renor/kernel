@@ -53,16 +53,12 @@ exception send_wait( mailbox* mBox, void* pData )
       msg* m = pop_mailbox_head(mBox);
       //copy senders data into reciver
       memcpy(m->pData,pData,mBox->nDataSize);
-      
-      
       remove_from_list( WaitingList, m->pBlock);
       sorted_insert( ReadyList, m->pBlock);
       //@TODO swich running task somewhere 
       free(m);
       mBox->nMessages = mBox->nMessages - 1;
       mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
-      
-      
     }
     else
     {
