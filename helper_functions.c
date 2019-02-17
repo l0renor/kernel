@@ -139,7 +139,7 @@ static void remove_running_task_from_mailbox( mailbox* mBox )
   current->pPrevious->pNext = current->pNext;
   free(current);
 }
-static void scedule(){
+static void schedule(){
   RunningTask = ReadyList->pHead->pNext->pTask;
 }
 

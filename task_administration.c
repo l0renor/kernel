@@ -67,6 +67,7 @@ exception create_task( void(* body)(), uint d )
       sorted_insert(ReadyList, o);
       
       //Load Context
+      schedule();
       LoadContext();
     }
   }
@@ -88,6 +89,7 @@ void terminate()
   free(toDelTCB);
   free(toDelObject);
   isr_off();
+  schedule();
   LoadContext(); 
 }
 
@@ -100,5 +102,6 @@ void run( void )
   //Enable interrupts
   isr_on();
   //Load context
+  schedule();
   LoadContext();
 }

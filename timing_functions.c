@@ -11,6 +11,7 @@ exception wait( uint nTicks )
     remove_from_list(ReadyList,running);
     running->nTCnt = nTicks;
     sorted_insert(TimerList,running);
+    schedule();
     LoadContext();
   } 
   else 
@@ -62,6 +63,7 @@ void set_deadline( uint deadline )
     //Reschedule Readylist
     insertion_sort(ReadyList);
     //Load context
+    schedule();
     LoadContext();
   }
 }

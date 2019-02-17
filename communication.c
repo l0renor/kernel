@@ -81,6 +81,7 @@ exception send_wait( mailbox* mBox, void* pData )
         mBox->nMessages = mBox->nMessages + 1;
       }
     }
+    schedule();
     LoadContext();
     
     
@@ -158,6 +159,7 @@ exception receive_wait( mailbox* mBox, void* pData )
       sorted_insert(WaitingList, runningTaskObject);
       
     }
+    schedule();
     LoadContext();
   }
   else
@@ -202,6 +204,7 @@ exception send_no_wait( mailbox* mBox, void* pData )
       //todo swich running task somewhe
       
       free(m);
+      schedule();
       LoadContext();
       
     }
@@ -259,6 +262,7 @@ exception receive_no_wait( mailbox* mBox, void* pData )
       free(sender);
     }
     //Load context
+    schedule();
     LoadContext();
   }
   //Return status on received message
