@@ -1,4 +1,4 @@
-void insertion_sort(list* l) 
+void insertion_sort( list* l ) 
 { 
   list* sorted = create_list(); 
   listobj* current = l->pHead->pNext; 
@@ -15,7 +15,7 @@ void insertion_sort(list* l)
 } 
 
 // Only call if l is already sorted!
-void sorted_insert(list* l, listobj* o)
+void sorted_insert( list* l, listobj* o )
 { 
   listobj* first = l->pHead->pNext; /* skip head */
   
@@ -86,7 +86,7 @@ static void idle_function( void )
     //SWYM
   }
 }
-static msg* create_message(char *pData,exception Status)
+static msg* create_message( char *pData, exception Status )
 {
   msg *m = ( msg* ) calloc( 1, sizeof( msg ) );
   if ( m != NULL ) {
@@ -99,7 +99,7 @@ static msg* create_message(char *pData,exception Status)
   return m;
 }
 
-static msg* pop_mailbox_head(mailbox* mBox)
+static msg* pop_mailbox_head( mailbox* mBox )
 {
   msg* result =  mBox->pHead->pNext;
   //change pointers
@@ -109,7 +109,7 @@ static msg* pop_mailbox_head(mailbox* mBox)
 }
 
 
-static void push_mailbox_tail( mailbox* mBox,msg* m)
+static void push_mailbox_tail( mailbox* mBox, msg* m )
 {
   m->pNext = mBox->pTail;
   m->pPrevious = mBox->pTail->pPrevious;
@@ -118,7 +118,7 @@ static void push_mailbox_tail( mailbox* mBox,msg* m)
 }
 
 
-static void remove_from_list( list* l, listobj* o)
+static void remove_from_list( list* l, listobj* o )
 {
   listobj* current = l->pHead;
   while(current!= o){
@@ -139,7 +139,8 @@ static void remove_running_task_from_mailbox( mailbox* mBox )
   current->pPrevious->pNext = current->pNext;
   free(current);
 }
-static void schedule(){
+
+static void schedule( void ){
   RunningTask = ReadyList->pHead->pNext->pTask;
 }
 
