@@ -101,12 +101,12 @@ void TimerInt( void )
     {
       listobj* toMove = current;
       current = toMove->pNext;
-      remove_from_list(WaitingList, toMove);
-      msg* previous = current->pMessage->pPrevious;
-      msg* next = current->pMessage->pNext;
-      next->pPrevious = previous;
-      previous->pNext = next;
-      free(current->pMessage);
+      remove_from_list(WaitingList, toMove);      
+//      msg* previous = current->pMessage->pPrevious;
+//      msg* next = current->pMessage->pNext;
+//      next->pPrevious = previous;
+//      previous->pNext = next;
+//      free(current->pMessage);
       sorted_insert(ReadyList, current);
     }
   }
