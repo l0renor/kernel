@@ -3,7 +3,6 @@
 
 int init_kernel( void )
 {
-  KernelMode = INIT;
   TimerInt();
   ReadyList = create_list();
   WaitingList = create_list();
@@ -11,6 +10,8 @@ int init_kernel( void )
   if(TimerList == NULL || ReadyList == NULL || WaitingList == NULL){
     return FAIL;
   }
+  create_task(idle_function,UINT_MAX);
+  KernelMode = INIT;
   return OK;
 }
 
