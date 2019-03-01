@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <limits.h>
 
-void TestWrapper( void(* test_in_running_mode)() );
+void TestWrapper( void (* test_in_running_mode)() );
 
 // Task Administration Tests
 
