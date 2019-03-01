@@ -3,7 +3,7 @@ exception wait( uint nTicks )
   isr_off();
   SaveContext();
   exception status;
-  static bool is_first_execution = TRUE;
+  static volatile bool is_first_execution = TRUE;
   if ( is_first_execution )
   {
     is_first_execution = FALSE;
@@ -11,6 +11,7 @@ exception wait( uint nTicks )
     remove_from_list(ReadyList,running);
     running->nTCnt = nTicks;
     sorted_insert(TimerList,running);
+    schedule();
     LoadContext();
   } 
   else 
@@ -47,7 +48,7 @@ uint deadline( void )
 
 void set_deadline( uint deadline )
 {
-  static bool is_first_execution = TRUE;
+  static volatile bool is_first_execution = TRUE;
   //Disable interrupt
   isr_off();
   //Save context
@@ -62,6 +63,7 @@ void set_deadline( uint deadline )
     //Reschedule Readylist
     insertion_sort(ReadyList);
     //Load context
+    schedule();
     LoadContext();
   }
 }
@@ -74,33 +76,37 @@ void TimerInt( void )
   listobj* current = TimerList->pHead->pNext;
   while ( current->pTask != NULL )
   {
-    // IF Deadline is reached 
-    if(current->pTask->DeadLine - ticks() <= 0)
+    // IF element still has to wait
+    if ( current->nTCnt > 1 )
     {
-      remove_from_list( TimerList,current);
-      sorted_insert(ReadyList,current);
+      current->nTCnt--;
+      current=current->pNext;
     }
-    current=current->pNext;
+    else 
+    {
+      listobj* toMove = current;
+      current = toMove->pNext;
+      remove_from_list(TimerList, toMove);
+      toMove->nTCnt = 0;
+      sorted_insert(ReadyList, toMove);
+    }
   }
   
   // check WaitingList
   current = WaitingList->pHead->pNext;
   while ( current->pTask != NULL )
   {
-    // IF element still has to wait
-    if ( current->nTCnt > 1 )
+    // IF Deadline is reached 
+    if( current->pTask->DeadLine <= ticks() )
     {
-      current->nTCnt--;
-    }
-    else
-    {
-      remove_from_list(WaitingList, current);
-      current->nTCnt = 0;
-      msg* previous = current->pMessage->pPrevious;
-      msg* next = current->pMessage->pNext;
-      next->pPrevious = previous;
-      previous->pNext = next;
-      free(current->pMessage);
+      listobj* toMove = current;
+      current = toMove->pNext;
+      remove_from_list(WaitingList, toMove);      
+//      msg* previous = current->pMessage->pPrevious;
+//      msg* next = current->pMessage->pNext;
+//      next->pPrevious = previous;
+//      previous->pNext = next;
+//      free(current->pMessage);
       sorted_insert(ReadyList, current);
     }
   }

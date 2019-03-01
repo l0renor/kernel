@@ -3,14 +3,15 @@
 
 int init_kernel( void )
 {
-  KernelMode = INIT;
-  TimerInt();
+  Ticks = 0;
   ReadyList = create_list();
   WaitingList = create_list();
   TimerList = create_list();
   if(TimerList == NULL || ReadyList == NULL || WaitingList == NULL){
     return FAIL;
   }
+  create_task(idle_function,UINT_MAX);
+  KernelMode = INIT;
   return OK;
 }
 
@@ -67,6 +68,7 @@ exception create_task( void(* body)(), uint d )
       sorted_insert(ReadyList, o);
       
       //Load Context
+      schedule();
       LoadContext();
     }
   }
@@ -88,6 +90,7 @@ void terminate()
   free(toDelTCB);
   free(toDelObject);
   isr_off();
+  schedule();
   LoadContext(); 
 }
 
@@ -100,5 +103,6 @@ void run( void )
   //Enable interrupts
   isr_on();
   //Load context
+  schedule();
   LoadContext();
 }
