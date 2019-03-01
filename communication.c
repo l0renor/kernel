@@ -80,7 +80,8 @@ exception send_wait( mailbox* mBox, void* pData )
     LoadContext();
     
     
-  }else//not first excecution
+  }
+  else//not first excecution
   {
     if(deadline() - ticks() <=0)
     {
@@ -141,10 +142,17 @@ exception receive_wait( mailbox* mBox, void* pData )
       }
       //Add Message to the Mailbox
       push_mailbox_tail(mBox, message);
-      //mailbox full?
-      if(mBox->nMaxMessages == mBox->nMessages){
-        pop_mailbox_head(mBox);
-      }else{
+      //IF Mailbox is full
+      if ( mBox->nMaxMessages == mBox->nMessages )
+      {
+        msg* head = pop_mailbox_head(mBox);
+        remove_from_list(WaitingList, head->pBlock);
+        head->pBlock->nTCnt = 1;
+        sortedInsert(ReadyList, head->pBlock);
+        free(head);
+      }
+      else
+      {
         mBox->nMessages++;
       }
       ReadyList->pHead->pNext->pMessage = message;
@@ -152,7 +160,6 @@ exception receive_wait( mailbox* mBox, void* pData )
       listobj* runningTaskObject = ReadyList->pHead->pNext;
       remove_from_list(ReadyList, runningTaskObject);
       sorted_insert(WaitingList, runningTaskObject);
-      
     }
     LoadContext();
   }
@@ -167,6 +174,11 @@ exception receive_wait( mailbox* mBox, void* pData )
       //Enable interrupt
       isr_on();
       //Return DEADLINE_REACHED
+      return DEADLINE_REACHED;
+    }
+    else if ( ReadyList->pHead->pNext->nTCnt = 1 ) 
+    {
+      //FLAG IF TASK WAS THROWN OUT OF FULL MAILBOX 
       return DEADLINE_REACHED;
     }
     else
