@@ -1,5 +1,14 @@
 #include "tests.h"
 
+//General Wrapper for all test which also have to be tasks and need noo special pre-executive operations.
+void TestWrapper( void (* test_in_running_mode)() )
+{
+  init_kernel();
+  create_task(test_in_running_mode,1);
+  run();
+  // Continues in test_in_running_mode
+}
+
 void test_init_kernel()
 {
   assert(init_kernel() == OK);
@@ -7,6 +16,7 @@ void test_init_kernel()
   assert(WaitingList != NULL);
   assert(TimerList != NULL);
   assert(KernelMode == INIT);
+  
   //readyListTests
   //Idle task
   assert(ReadyList->pHead->pNext->pTask->DeadLine == UINT_MAX);
