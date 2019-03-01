@@ -8,10 +8,14 @@ int init_kernel( void )
   WaitingList = create_list();
   TimerList = create_list();
   if(TimerList == NULL || ReadyList == NULL || WaitingList == NULL){
+    free(TimerList);
+    free(ReadyList);
+    free(WaitingList);
     return FAIL;
   }
   create_task(idle_function,UINT_MAX);
   KernelMode = INIT;
+  RunningTask = NULL;
   return OK;
 }
 
@@ -50,8 +54,8 @@ exception create_task( void(* body)(), uint d )
     }
     //Insert new task in Readylist
     sorted_insert(ReadyList, o);
+    isr_on();
   }
-  //ELSE
   else
   {
     static bool is_first_execution = TRUE;
@@ -85,6 +89,7 @@ exception create_task( void(* body)(), uint d )
 
 void terminate()
 {
+  isr_off();
   //remove from readyList
   listobj *toDelObject = ReadyList->pHead->pNext;
   TCB   *toDelTCB = toDelObject->pTask;
@@ -96,7 +101,6 @@ void terminate()
   //Delete old task
   free(toDelTCB);
   free(toDelObject);
-  isr_off();
   schedule();
   LoadContext(); 
 }
@@ -104,7 +108,7 @@ void terminate()
 void run( void ) 
 {
   //Initialize interrupt timer
-  
+  TimerInt();
   //Set the kernel in running mode
   KernelMode = RUNNING;
   //Enable interrupts

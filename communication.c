@@ -149,7 +149,7 @@ exception receive_wait( mailbox* mBox, void* pData )
         msg* head = pop_mailbox_head(mBox);
         remove_from_list(WaitingList, head->pBlock);
         head->pBlock->nTCnt = 1;
-        sortedInsert(ReadyList, head->pBlock);
+        sorted_insert(ReadyList, head->pBlock);
         free(head);
       }
       else
@@ -178,7 +178,7 @@ exception receive_wait( mailbox* mBox, void* pData )
       //Return DEADLINE_REACHED
       return DEADLINE_REACHED;
     }
-    else if ( ReadyList->pHead->pNext->nTCnt = 1 ) 
+    else if ( ReadyList->pHead->pNext->nTCnt == 1 ) 
     {
       //FLAG IF TASK WAS THROWN OUT OF FULL MAILBOX 
       return DEADLINE_REACHED;

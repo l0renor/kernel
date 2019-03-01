@@ -6,8 +6,5 @@
 
 void main(void)
 {
-    SystemInit();
-    isr_off();
-    int res = init_kernel();
-    run();
+  test_init_kernel();
 }
