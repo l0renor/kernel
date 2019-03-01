@@ -3,7 +3,7 @@
 
 int init_kernel( void )
 {
-  TimerInt();
+  Ticks = 0;
   ReadyList = create_list();
   WaitingList = create_list();
   TimerList = create_list();
