@@ -1,8 +1,8 @@
 #include "tests.h"
 
-void init_kernel_test()
+void test_init_kernel()
 {
-  init_kernel();
+  assert(init_kernel() == OK);
   assert(ReadyList != NULL);
   assert(WaitingList != NULL);
   assert(TimerList != NULL);
@@ -11,13 +11,13 @@ void init_kernel_test()
   //Idle task
   assert(ReadyList->pHead->pNext->pTask->DeadLine == UINT_MAX);
   assert(ReadyList->pTail->pPrevious->pTask->DeadLine == UINT_MAX);
-  assert(ReadyList->pHead->pNext->pNext-> == ReadyList->pTail);
-  assert(ReadyList->pHead->pNext->pPrevious-> == ReadyList->pHead);
+  assert(ReadyList->pHead->pNext->pNext == ReadyList->pTail);
+  assert(ReadyList->pHead->pNext->pPrevious == ReadyList->pHead);
   assert(Ticks == 0);
   //head
-   assert(ReadyList->pHead->pPrevious-> == NULL);
-   //tail
-   assert(ReadyList->pTail->pNext-> == NULL);
+  assert(ReadyList->pHead->pPrevious == NULL);
+  //tail
+  assert(ReadyList->pTail->pNext == NULL);
 }
 
 void create_task_test_init()
@@ -40,7 +40,6 @@ void create_task_test_running()
   assert(KernelMode == INIT);
   assert(ReadyList->pHead->pNext->pTask->DeadLine == UINT_MAX);
   assert(ReadyList->pTail->pPrevious->pTask->DeadLine == UINT_MAX);
-  create_task(create_task_test_task,1000);
   run();
   //now the test continues in create_task_test_task
 }
