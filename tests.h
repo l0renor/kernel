@@ -1,12 +1,21 @@
 #include <assert.h>
 #include <limits.h>
-int isEqualPointer(void * comp1,void * comp2);//dont realy need 
-int isNotEqualPointer(void * comp1,void * comp2);
-void init_kernel_test();
-void create_task_test_init();
-void create_task_test_running();
-void create_task_test_task();//task run to test create task 
-void run_test();
-void terminate_test();
-void create_mailbox_test();
-void remove_mailbox_test();
+
+void TestWrapper( void(* test_in_running_mode)() );
+
+// Task Administration Tests
+
+void test_init_kernel();
+
+void test_create_task_init();
+void test_create_task_running();
+void test_create_task_error_memory_full();
+
+void test_run();
+
+void test_terminate();
+
+// Communication Tests
+
+void test_create_mailbox();
+void test_remove_mailbox();

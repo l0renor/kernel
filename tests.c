@@ -1,3 +1,5 @@
+#include "tests.h"
+
 void init_kernel_test()
 {
   init_kernel();
@@ -17,6 +19,7 @@ void init_kernel_test()
    //tail
    assert(ReadyList->pTail->pNext-> == NULL);
 }
+
 void create_task_test_init()
 {
   init_kernel();
@@ -47,6 +50,4 @@ void create_task_test_task()
   assert(KernelMode == RUNNING);
   assert(ReadyList->pHead->pNext->pTask->DeadLine == 1000);
   assert(ReadyList->pTail->pPrevious->pTask->DeadLine == UINT_MAX);
-  
-  
 }

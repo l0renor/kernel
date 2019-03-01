@@ -21,7 +21,6 @@ exception create_task( void(* body)(), uint d )
   isr_off(); /* protextion of calloc */
   TCB* pTCB = (TCB *)calloc(1,sizeof(TCB));
   if ( pTCB == NULL ) {
-    //F: perhaps a real solution in the future...
     return FAIL;
   }
   
@@ -40,14 +39,17 @@ exception create_task( void(* body)(), uint d )
   pTCB->SP = &( pTCB->StackSeg[STACK_SIZE-9] );
   
   //IF start-up mode THEN
-  if (KernelMode)
+  if (KernelMode == INIT)
   {
     //Create ListObj for TCB
     listobj* o = create_listobj(pTCB);
+    if ( o == NULL )
+    {
+      free(pTCB);
+      return FAIL;
+    }
     //Insert new task in Readylist
     sorted_insert(ReadyList, o);
-    //Return status
-    return OK;
   }
   //ELSE
   else
@@ -58,12 +60,17 @@ exception create_task( void(* body)(), uint d )
     //Save context
     SaveContext();
     //IF "first execution" THEN
-    if ( is_first_execution == TRUE )
+    if ( is_first_execution )
     {
       //Set: "not first execution any more"
       is_first_execution = FALSE;
       //Create ListObj for TCB
       listobj* o = create_listobj(pTCB);
+      if ( o == NULL )
+      {
+        free(pTCB);
+        return FAIL;
+      }
       //Insert new task in Readylist
       sorted_insert(ReadyList, o);
       
@@ -73,7 +80,7 @@ exception create_task( void(* body)(), uint d )
     }
   }
   //Return status
-  return FAIL;
+  return OK;
 }
 
 void terminate()
