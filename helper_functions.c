@@ -28,7 +28,7 @@ void sorted_insert( list* l, listobj* o )
     l->pTail->pPrevious = o;
   }
   // SPECIAL CASE: New object has lower deadline than in list.
-  else if (o->pTask->DeadLine < first->pTask->DeadLine)
+  else if (o->pTask->Deadline < first->pTask->Deadline)
   { 
     o->pNext = first;
     o->pPrevious = l->pHead;
@@ -40,7 +40,7 @@ void sorted_insert( list* l, listobj* o )
   { 
     listobj* current = first;
     // Iterate through list until current followers deadline is smaller than the one of the new object.
-    while (current->pNext->pTask->DeadLine <= o->pTask->DeadLine && current->pNext->pTask != NULL)
+    while (current->pNext->pTask->Deadline <= o->pTask->Deadline && current->pNext->pTask != NULL)
     {
       current = current->pNext;
     }
