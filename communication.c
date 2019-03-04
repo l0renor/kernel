@@ -42,62 +42,57 @@ exception send_wait( mailbox* mBox, void* pData )
   isr_off();
   //Save context
   SaveContext();
-  //IF "first execution" THEN
-  if ( is_first_execution )
+  if(mBox->nBlockedMsg < 0)
   {
-    //Set: "not first execution any more"
-    is_first_execution = FALSE;
-    if(mBox->nBlockedMsg < 0)
-    {
-      //receiving tasks waiting
-      msg* m = pop_mailbox_head(mBox);
-      //copy senders data into reciver
-      memcpy(m->pData,pData,mBox->nDataSize);
-      remove_from_list( WaitingList, m->pBlock);
-      sorted_insert( ReadyList, m->pBlock);
-      //@TODO swich running task somewhere 
-      free(m);
-      mBox->nMessages = mBox->nMessages - 1;
-      mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
-    }
-    else
-    {
-      msg* newM = (msg *)calloc(1,sizeof(msg));
-      if(newM == NULL){
-        return DEADLINE_REACHED;
-      }
-      newM->pData = pData;
-      push_mailbox_tail(mBox,newM);
-      ReadyList->pHead->pNext->pMessage = newM;
-      remove_from_list(ReadyList,ReadyList->pHead->pNext);
-      mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
-      if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
-        pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
-      }else{
-        mBox->nMessages = mBox->nMessages + 1;
-      }
-    }
-    schedule();
-    LoadContext();
-    
-    
+    //receiving tasks waiting
+    msg* m = pop_mailbox_head(mBox);
+    //copy senders data into reciver
+    memcpy(m->pData,pData,mBox->nDataSize);
+    remove_from_list( WaitingList, m->pBlock);
+    PreviousTask = ReadyList->pHead->pNext->pTask;
+    sorted_insert( ReadyList, m->pBlock);
+    NextTask = ReadyList->pHead->pNext->pTask;
+    //@TODO swich running task somewhere 
+    free(m);
+    mBox->nMessages = mBox->nMessages - 1;
+    mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
   }
-  else//not first excecution
+  else
   {
-    if(deadline() <= ticks() )
-    {
-      isr_off();
-      remove_running_task_from_mailbox(mBox);
-      mBox->nMessages = mBox->nMessages - 1;
-      isr_on();
+    msg* newM = (msg *)calloc(1,sizeof(msg));
+    if(newM == NULL){
       return DEADLINE_REACHED;
     }
-    else
-    {
-      //IS pepsi 
-      return OK;
+    newM->pData = pData;
+    push_mailbox_tail(mBox,newM);
+    ReadyList->pHead->pNext->pMessage = newM;
+    remove_from_list(ReadyList,ReadyList->pHead->pNext);
+    mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
+    if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
+      pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
+    }else{
+      mBox->nMessages = mBox->nMessages + 1;
     }
   }
+  schedule();
+  LoadContext();
+  
+  
+  
+  if(deadline() <= ticks() )
+  {
+    isr_off();
+    remove_running_task_from_mailbox(mBox);
+    mBox->nMessages = mBox->nMessages - 1;
+    isr_on();
+    return DEADLINE_REACHED;
+  }
+  else
+  {
+    //IS pepsi 
+    return OK;
+  }
+  
   return DEADLINE_REACHED;//make compiler happy
 }
 

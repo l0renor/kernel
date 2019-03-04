@@ -97,7 +97,7 @@ void TimerInt( void )
   while ( current->pTask != NULL )
   {
     // IF Deadline is reached 
-    if( current->pTask->DeadLine <= ticks() )
+    if( current->pTask->Deadline <= ticks() )
     {
       listobj* toMove = current;
       current = toMove->pNext;

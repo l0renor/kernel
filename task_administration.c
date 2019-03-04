@@ -15,7 +15,6 @@ int init_kernel( void )
   }
   create_task(idle_function,UINT_MAX);
   KernelMode = INIT;
-  RunningTask = NULL;
   return OK;
 }
 
@@ -62,23 +61,20 @@ exception create_task( void(* body)(), uint d )
     //Disable interrupts
     isr_off();
     //Save context
-   
-      //Create ListObj for TCB
-      listobj* o = create_listobj(pTCB);
-      if ( o == NULL )
-      {
-        free(pTCB);
-        return FAIL;
-      }
-      //Insert new task in Readylist
-      PreviousTask = ReadyList->pHead->pNext;
-      sorted_insert(ReadyList, o);
-      NextTask = ReadyList->pHead->pNext->pTask;
-      
-      //Load Context
-      schedule();
-      LoadContext();
+    
+    //Create ListObj for TCB
+    listobj* o = create_listobj(pTCB);
+    if ( o == NULL )
+    {
+      free(pTCB);
+      return FAIL;
     }
+    //Insert new task in Readylist
+    PreviousTask = ReadyList->pHead->pNext->pTask;
+    sorted_insert(ReadyList, o);
+    NextTask = ReadyList->pHead->pNext->pTask;
+    SwitchContext();
+    
   }
   //Return status
   return OK;
@@ -87,7 +83,8 @@ exception create_task( void(* body)(), uint d )
 void terminate()
 {
   isr_off();
-  leavingObj = extract(ReadyList->pHead->pNext);
+  listobj* leavingObj = ReadyList->pHead->pNext;
+  remove_from_list(ReadyList, ReadyList->pHead->pNext);
   NextTask = ReadyList->pHead->pNext->pTask;
   switch_to_stack_of_next_stack();
   free(leavingObj->pTask);
@@ -99,4 +96,8 @@ void run( void )
 {
   NextTask = ReadyList->pHead->pNext->pTask;
   LoadContext_In_Run();
+  KernelMode = RUNNING;
+  LoadContext_In_Run();
+  
+  
 }
