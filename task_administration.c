@@ -85,7 +85,7 @@ void terminate()
   isr_off();
   listobj* leavingObj = ReadyList->pHead->pNext;
   remove_from_list(ReadyList, ReadyList->pHead->pNext);
-  NextTask = ReadyList->pHead->pNext->pTask;
+  NextTask = getFirstRL();
   switch_to_stack_of_next_task();
   free(leavingObj->pTask);
   free(leavingObj);
@@ -94,10 +94,7 @@ void terminate()
 
 void run( void ) 
 {
-  NextTask = ReadyList->pHead->pNext->pTask;
-  LoadContext_In_Run();
+  NextTask = getFirstRL();
   KernelMode = RUNNING;
-  LoadContext_In_Run();
-  
-  
+  LoadContext_In_Run();  
 }

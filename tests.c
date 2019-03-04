@@ -56,7 +56,7 @@ void test_create_task_running()//this test ist called from the wrapper
   //assert new Task is in ready list
   assert(ReadyList->pHead->pNext->pNext->pTask->Deadline == 777);
   assert(ReadyList->pTail->pPrevious->pPrevious->pTask->Deadline == 777);
-  
+  terminate();
 }
 
 void stage_one_test_case(){
