@@ -19,3 +19,7 @@ void test_terminate();
 
 void test_create_mailbox();
 void test_remove_mailbox();
+void stage_one_test_case();
+void stage_one_test_case_task_one();
+void stage_one_test_case_task_two();
+void stage_one_test_case_task_wait();

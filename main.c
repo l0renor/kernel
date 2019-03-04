@@ -6,5 +6,5 @@
 
 void main(void)
 {
-  test_init_kernel();
+  TestWrapper(test_create_task_running);
 }
