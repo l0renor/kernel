@@ -72,9 +72,12 @@ exception send_wait( mailbox* mBox, void* pData )
     sorted_insert( WaitingList, toMove);
     NextTask = ReadyList->pHead->pNext->pTask;
     mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
-    if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
+    if(mBox->nMessages == mBox->nMaxMessages)
+    {//mailbox is full
       pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
-    }else{
+    }
+    else
+    {
       mBox->nMessages = mBox->nMessages + 1;
     }
   }
@@ -114,9 +117,12 @@ exception receive_wait( mailbox* mBox, void* pData )
     //IF Message was of wait type THEN
     if ( sender->pBlock != NULL )
     {
+      //Update PreviousTask
       PreviousTask = getFirstRL();
+      //Move sending task to ReadyList
       remove_from_list(WaitingList, sender->pBlock);
       sorted_insert(ReadyList, sender->pBlock);
+      //Update NextTask
       NextTask = getFirstRL();
     }
     else 
@@ -149,12 +155,19 @@ exception receive_wait( mailbox* mBox, void* pData )
       mBox->nMessages++;
     }
     ReadyList->pHead->pNext->pMessage = message;
+    //Update PreviousTask
+    PreviousTask = getFirstRL();
     //Move receiving task from Readylist to Waitinglist
     listobj* runningTaskObject = ReadyList->pHead->pNext;
     remove_from_list(ReadyList, runningTaskObject);
     sorted_insert(WaitingList, runningTaskObject);
+    //Update NextTask
+    NextTask = getFirstRL();
   }
+  
+  //Switch context
   SwitchContext();
+  
   if (deadline() - ticks() <= 0)
   {
     //Disable interrupt
@@ -176,7 +189,7 @@ exception receive_wait( mailbox* mBox, void* pData )
     //Return OK
     return OK;
   }
-  return DEADLINE_REACHED;//make compiler happy
+  return DEADLINE_REACHED;
 }
 
 exception send_no_wait( mailbox* mBox, void* pData )
@@ -216,43 +229,37 @@ exception send_no_wait( mailbox* mBox, void* pData )
 
 exception receive_no_wait( mailbox* mBox, void* pData )
 {
-  static volatile bool is_first_execution = TRUE;
   //Disable interrupt
   isr_off();
-  //Save context
-  SaveContext();
   static exception message_received = FAIL;
-  //IF first execution THEN
-  if ( is_first_execution )
+  //IF send Message is waiting THEN
+  if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )
   {
-    //Set: "not first execution any more"
-    is_first_execution = FALSE;
-    
-    //IF send Message is waiting THEN
-    if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )
+    message_received = OK;
+    msg* sender = pop_mailbox_head(mBox);
+    mBox->nMessages--;
+    mBox->nBlockedMsg--;
+    //Copy sender's data to receiving task's data area
+    memcpy(pData, sender->pData, mBox->nDataSize);
+    //IF Message was of wait type THEN
+    if ( sender->pBlock != NULL )
     {
-      message_received = OK;
-      msg* sender = pop_mailbox_head(mBox);
-      mBox->nMessages--;
-      mBox->nBlockedMsg--;
-      //Copy sender's data to receiving task's data area
-      memcpy(pData, sender->pData, mBox->nDataSize);
-      //IF Message was of wait type THEN
-      if ( sender->pBlock != NULL )
-      {
-        remove_from_list(WaitingList, sender->pBlock);
-        sorted_insert(ReadyList, sender->pBlock);
-      }
-      else 
-      {
-        void* p = realloc(sender->pData, mBox->nDataSize);
-        free(p);
-      }
-      free(sender);
+      //Update PreviousTask
+      PreviousTask = getFirstRL();
+      //Move sending task to ReadyList
+      remove_from_list(WaitingList, sender->pBlock);
+      sorted_insert(ReadyList, sender->pBlock);
+      //Update NextTask
+      NextTask = getFirstRL();
+      //Switch context
+      SwitchContext();
     }
-    //Load context
-    schedule();
-    LoadContext();
+    else 
+    {
+      void* p = realloc(sender->pData, mBox->nDataSize);
+      free(p);
+    }
+    free(sender);
   }
   //Return status on received message
   return message_received;
