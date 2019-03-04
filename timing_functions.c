@@ -1,29 +1,26 @@
 exception wait( uint nTicks )
 {
   isr_off();
-  SaveContext();
   exception status;
-  static volatile bool is_first_execution = TRUE;
-  if ( is_first_execution )
+  //Update PreviousTask
+  PreviousTask = getFirstRL();
+  //Place RunningTask in the TimerList
+  listobj* running = ReadyList->pHead->pNext;
+  remove_from_list(ReadyList,running);
+  running->nTCnt = nTicks;
+  sorted_insert(TimerList,running);
+  //Update NextTask
+  NextTask = getFirstRL();
+  //Switch context
+  SwitchContext();
+  
+  if ( deadline() - ticks() <= 0 )
   {
-    is_first_execution = FALSE;
-    listobj* running = ReadyList->pHead->pNext;
-    remove_from_list(ReadyList,running);
-    running->nTCnt = nTicks;
-    sorted_insert(TimerList,running);
-    schedule();
-    LoadContext();
-  } 
-  else 
+    status = DEADLINE_REACHED;
+  }
+  else
   {
-    if ( deadline() - ticks() <= 0 )
-    {
-      status = DEADLINE_REACHED;
-    }
-    else
-    {
-      status = OK;
-    }
+    status = OK;
   }
   return status;
 }
@@ -48,24 +45,17 @@ uint deadline( void )
 
 void set_deadline( uint deadline )
 {
-  static volatile bool is_first_execution = TRUE;
   //Disable interrupt
   isr_off();
-  //Save context
-  SaveContext();
-  //IF first execution THEN
-  if ( is_first_execution )
-  {
-    //Set: "not first execution any more"
-    is_first_execution = FALSE;
-    //Set the deadline field in the calling TCB.
-    RunningTask->DeadLine = deadline;
-    //Reschedule Readylist
-    insertion_sort(ReadyList);
-    //Load context
-    schedule();
-    LoadContext();
-  }
+  //Set the deadline field in the calling TCB.
+  RunningTask->DeadLine = deadline;
+  PreviousTask = getFirstRL();
+  //Reschedule Readylist
+  insertion_sort(ReadyList);
+  //Update NextTask
+  NextTask = getFirstRL();
+  //Switch context
+  SwitchContext();
 }
 
 void TimerInt( void )

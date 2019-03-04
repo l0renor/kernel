@@ -13,5 +13,11 @@ void main(void)
   
   init_kernel();
   
+  // Code here
+  
+  
+  
+  // Code end
+  
   run();
 }
