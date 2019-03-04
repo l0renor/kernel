@@ -86,7 +86,7 @@ void terminate()
   listobj* leavingObj = ReadyList->pHead->pNext;
   remove_from_list(ReadyList, ReadyList->pHead->pNext);
   NextTask = ReadyList->pHead->pNext->pTask;
-  switch_to_stack_of_next_stack();
+  switch_to_stack_of_next_task();
   free(leavingObj->pTask);
   free(leavingObj);
   LoadContext_In_Terminate();

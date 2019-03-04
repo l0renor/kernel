@@ -40,8 +40,6 @@ exception send_wait( mailbox* mBox, void* pData )
   static volatile bool is_first_execution = TRUE;
   //Disable interrupts
   isr_off();
-  //Save context
-  SaveContext();
   if(mBox->nBlockedMsg < 0)
   {
     //receiving tasks waiting
@@ -98,8 +96,6 @@ exception send_wait( mailbox* mBox, void* pData )
     //IS pepsi 
     return OK;
   }
-  
-  return DEADLINE_REACHED;//make compiler happy
 }
 
 exception receive_wait( mailbox* mBox, void* pData )
@@ -189,7 +185,6 @@ exception receive_wait( mailbox* mBox, void* pData )
     //Return OK
     return OK;
   }
-  return DEADLINE_REACHED;
 }
 
 exception send_no_wait( mailbox* mBox, void* pData )
