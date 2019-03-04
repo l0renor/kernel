@@ -1,12 +1,14 @@
 /*********************************************************/
-/** Global variabels and definitions                     */
+/** Global variables and definitions                     */
+/** Modified  on 27th Feb 2019                           */
 /*********************************************************/
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h>  /* for using the functions calloc, free */
+#include <string.h>  /* for using the function memcpy        */
+#include <limits.h>  /* for using the constant UINT_MAX      */
 
-#define CONTEXT_SIZE    13  /* for the 13 general purpose registers: r0 to r12 */ 
-#define STACK_SIZE      100 /* 100  about enough space*/
+#define CONTEXT_SIZE    8   /*  for the 8 registers: r4 to r11   */ 
+#define STACK_SIZE      100 /*  about enough space for the stack */
 
 
 #define TRUE    1
@@ -17,40 +19,39 @@
 
 #define FAIL    0
 #define SUCCESS 1
-#define OK      1
+#define OK              1
 
 #define DEADLINE_REACHED        0
 #define NOT_EMPTY               0
 
 #define SENDER          +1
-#define DUMMY           0
 #define RECEIVER        -1
 
 
 typedef int             exception;
 typedef int             bool;
 typedef unsigned int    uint;
-typedef int 		action;
+typedef int 			action;
 
 struct  l_obj;         // Forward declaration
 
-
-
-// Task Control Block, TCB
+// Task Control Block, TCB.  Modified on 24/02/2019
 typedef struct
 {
-        uint    Context[CONTEXT_SIZE];        
+        //uint    Context[CONTEXT_SIZE];        
         uint    *SP;
+        uint    R4toR11[CONTEXT_SIZE];
+        //void    (*LR)();
         void    (*PC)();
         uint    SPSR;     
         uint    StackSeg[STACK_SIZE];
-        uint    DeadLine;
+        uint    Deadline;
 } TCB;
 
 
 // Message items
 typedef struct msgobj {
-        void            *pData;
+        char            *pData;
         exception       Status;
         struct l_obj    *pBlock;
         struct msgobj   *pPrevious;
@@ -89,46 +90,46 @@ typedef struct _list {
 
 
 // Task administration
-int             init_kernel( void );
+int             init_kernel(void);
 exception	create_task( void (* body)(), uint d );
 void            terminate( void );
 void            run( void );
 
 // Communication
 mailbox*	create_mailbox( uint nMessages, uint nDataSize );
-exception       remove_mailbox( mailbox* mBox );
+int             no_messages( mailbox* mBox );
 
 exception       send_wait( mailbox* mBox, void* pData );
 exception       receive_wait( mailbox* mBox, void* pData );
 
 exception	send_no_wait( mailbox* mBox, void* pData );
-exception       receive_no_wait( mailbox* mBox, void* pData );
+int             receive_no_wait( mailbox* mBox, void* pData );
 
 
 // Timing
 exception	wait( uint nTicks );
-void            set_ticks( uint nTicks );
+void            set_ticks( uint no_of_ticks );
 uint            ticks( void );
 uint		deadline( void );
-void            set_deadline( uint deadline );
-void            TimerInt( void );
+void            set_deadline( uint nNew );
 
-// Interrupt
-extern void     isr_off( void );
-extern void     isr_on( void );
-extern void     SaveContext( void );	// Stores DSP registers in TCB pointed to by Running
-extern void     LoadContext( void );	// Restores DSP registers from TCB pointed to by Running
+//Interrupt and context switch
+extern void     isr_off(void);
+extern void     isr_on(void);
 
-//Own helper functions
-static void     insertion_sort( list* l );
-static void     sorted_insert( list* l, listobj* o );
-static listobj* create_listobj( TCB* t );
-static list*    create_list( void );
-static void     idle_function( void );
-static void     schedule(void);
-static msg* 	create_message(char *pData, exception Status);
-static msg* 	pop_mailbox_head( mailbox* mBox );
-static void     push_mailbox_tail( mailbox* mBox,msg* m);
-static void     remove_from_list( list* l, listobj* o);
-static void     remove_running_task_from_mailbox( mailbox* mBox );
+extern void     SwitchContext( void );	
+                   /* Stores stack frame in stack of currently running task, and the
+                    * remaining registers in its TCB
+                    * Loads stack frame from stack of RunningTask, and the
+                    * remaining registers from its TCB
+                    */
+                                        
+extern void     LoadContext_In_Run( void );
+                   /* To be used on the last line of the C function run() */
+
+extern void     switch_to_stack_of_next_task( void );
+                   /* To be used inside the C function terminate() */
+                     
+extern void     LoadContext_In_Terminate( void );
+                   /* To be used on the last line of the C function terminate() */
 
