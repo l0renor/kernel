@@ -40,7 +40,7 @@ uint ticks( void )
 uint deadline( void )
 {
   //Return the deadline of the current task
-  return RunningTask->DeadLine;
+  return  getFirstRL()->DeadLine;
 }
 
 void set_deadline( uint deadline )
@@ -48,7 +48,7 @@ void set_deadline( uint deadline )
   //Disable interrupt
   isr_off();
   //Set the deadline field in the calling TCB.
-  RunningTask->DeadLine = deadline;
+  getFirstRL()->DeadLine = deadline;
   PreviousTask = getFirstRL();
   //Reschedule Readylist
   insertion_sort(ReadyList);
@@ -92,11 +92,11 @@ void TimerInt( void )
       listobj* toMove = current;
       current = toMove->pNext;
       remove_from_list(WaitingList, toMove);      
-//      msg* previous = current->pMessage->pPrevious;
-//      msg* next = current->pMessage->pNext;
-//      next->pPrevious = previous;
-//      previous->pNext = next;
-//      free(current->pMessage);
+      //      msg* previous = current->pMessage->pPrevious;
+      //      msg* next = current->pMessage->pNext;
+      //      next->pPrevious = previous;
+      //      previous->pNext = next;
+      //      free(current->pMessage);
       sorted_insert(ReadyList, current);
     }
   }
