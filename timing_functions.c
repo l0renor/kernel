@@ -40,7 +40,7 @@ uint ticks( void )
 uint deadline( void )
 {
   //Return the deadline of the current task
-  return  getFirstRL()->DeadLine;
+  return  getFirstRL()->Deadline;
 }
 
 void set_deadline( uint deadline )
@@ -48,7 +48,7 @@ void set_deadline( uint deadline )
   //Disable interrupt
   isr_off();
   //Set the deadline field in the calling TCB.
-  getFirstRL()->DeadLine = deadline;
+  getFirstRL()->Deadline = deadline;
   PreviousTask = getFirstRL();
   //Reschedule Readylist
   insertion_sort(ReadyList);
@@ -100,7 +100,6 @@ void TimerInt( void )
       sorted_insert(ReadyList, current);
     }
   }
-  schedule();
 }
 
 
