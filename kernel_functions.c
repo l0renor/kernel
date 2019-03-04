@@ -3,5 +3,5 @@
 #include "task_administration.c"
 #include "communication.c"
 #include "timing_functions.c"
-#include "interrupts.c"
+//#include "interrupts.c"
 #include "helper_functions.c"
