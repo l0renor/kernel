@@ -131,7 +131,7 @@ static void remove_from_list( list* l, listobj* o )
 static void remove_running_task_from_mailbox( mailbox* mBox )
 {
   msg* current = mBox->pHead->pNext;
-  while ( current->pBlock->pTask != RunningTask )
+  while ( current->pBlock->pTask != getFirstRL() )
   {
     current = current->pNext;
   }
