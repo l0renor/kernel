@@ -67,7 +67,7 @@ void TimerInt( void )
   while ( current->pTask != NULL )
   {
     // IF element still has to wait
-    if ( current->nTCnt > 1 )
+    if ( current->nTCnt > 1 && current->pTask->Deadline > ticks() )
     {
       current->nTCnt--;
       current=current->pNext;

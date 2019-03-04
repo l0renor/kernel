@@ -190,9 +190,9 @@ exception send_no_wait( mailbox* mBox, void* pData )
       memcpy(m->pData,pData,mBox->nDataSize);
       
       PreviousTask = getFirstRL();
-      remove_from_list( WaitingList, m->pBlock);
+      remove_from_list( WaitingList, m->pBlock); //move task
       sorted_insert( ReadyList, m->pBlock);
-      free(m);
+      free(m); //delete old msg
       NextTask = getFirstRL();
       SwitchContext();  
     
