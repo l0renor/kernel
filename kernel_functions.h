@@ -139,7 +139,6 @@ static void     sorted_insert( list* l, listobj* o );
 static listobj* create_listobj( TCB* t );
 static list*    create_list( void );
 static void     idle_function( void );
-static void     schedule(void);
 static msg* 	create_message(char *pData, exception Status);
 static msg* 	pop_mailbox_head( mailbox* mBox );
 static void     push_mailbox_tail( mailbox* mBox,msg* m);

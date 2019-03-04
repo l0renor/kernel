@@ -52,7 +52,7 @@ exception send_wait( mailbox* mBox, void* pData )
     PreviousTask = ReadyList->pHead->pNext->pTask;
     sorted_insert( ReadyList, m->pBlock);
     NextTask = ReadyList->pHead->pNext->pTask;
-    //@TODO swich running task somewhere 
+
     free(m);
     mBox->nMessages = mBox->nMessages - 1;
     mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
@@ -66,7 +66,11 @@ exception send_wait( mailbox* mBox, void* pData )
     newM->pData = pData;
     push_mailbox_tail(mBox,newM);
     ReadyList->pHead->pNext->pMessage = newM;
-    remove_from_list(ReadyList,ReadyList->pHead->pNext);
+    PreviousTask = ReadyList->pHead->pNext->pTask;
+    listobj* toMove = ReadyList->pHead->pNext;
+    remove_from_list(ReadyList,toMove);
+    sorted_insert( WaitingList, toMove);
+    NextTask = ReadyList->pHead->pNext->pTask;
     mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
     if(mBox->nMessages == mBox->nMaxMessages){//mailbox is full
       pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
@@ -74,8 +78,7 @@ exception send_wait( mailbox* mBox, void* pData )
       mBox->nMessages = mBox->nMessages + 1;
     }
   }
-  schedule();
-  LoadContext();
+  SwitchContext();
   
   
   
@@ -189,10 +192,6 @@ exception receive_wait( mailbox* mBox, void* pData )
 
 exception send_no_wait( mailbox* mBox, void* pData )
 {
-  static volatile bool is_first_execution = TRUE;
-  if ( is_first_execution == TRUE )
-  {
-    is_first_execution = FALSE;
     if(mBox->nBlockedMsg < 0)
     {
       //receiving tasks waiting
@@ -201,14 +200,13 @@ exception send_no_wait( mailbox* mBox, void* pData )
       
       memcpy(m->pData,pData,mBox->nDataSize);
       
-      
+      PreviousTask = getFirstRL();
       remove_from_list( WaitingList, m->pBlock);
       sorted_insert( ReadyList, m->pBlock);
-      //todo swich running task somewhe
-      
       free(m);
-      schedule();
-      LoadContext();
+      NextTask = getFirstRL();
+      SwitchContext();  
+    
       
     }
     else
@@ -224,7 +222,6 @@ exception send_no_wait( mailbox* mBox, void* pData )
       push_mailbox_tail(mBox,newM);
     }
     
-  }
   return OK;
 }
 
