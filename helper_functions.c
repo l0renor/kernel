@@ -140,15 +140,7 @@ static void remove_running_task_from_mailbox( mailbox* mBox )
   free(current);
 }
 
-static void schedule( void ){
-  RunningTask = ReadyList->pHead->pNext->pTask;
+static TCB* getFirstRL ( void ) 
+{
+  return ReadyList->pHead->pNext->pTask;
 }
-
-////deprecated
-//static void add_to_list( list* l, listobj* o ) {
-//  listobj* last = l->pTail->pPrevious;
-//  last->pNext = o;
-//  o->pPrevious =last;
-//  o->pNext = l->pTail;
-//  l->pTail->pPrevious = o;
-//}
