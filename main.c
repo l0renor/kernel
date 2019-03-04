@@ -6,5 +6,12 @@
 
 void main(void)
 {
-  TestWrapper(test_create_task_running);
+  SystemInit();
+  SysTick_Config(100000);
+  SCB->SHP[((uint32_t)(SysTick_IRQn) & 0xF)-4] = (0xE0);
+  isr_off();
+  
+  init_kernel();
+  
+  run();
 }

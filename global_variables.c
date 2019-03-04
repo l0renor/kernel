@@ -1,6 +1,7 @@
 uint    Ticks;          /* global sys tick counter */
-int     KernelMode;     /* can equal either INIT or RUNNING */
-TCB*    RunningTask;
+uint    KernelMode;     /* can equal either INIT or RUNNING */
+TCB*    PreviousTask;
+TCB*    NextTask;
 list*   ReadyList;
 list*   WaitingList;
 list*   TimerList;

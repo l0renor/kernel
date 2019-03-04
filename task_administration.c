@@ -90,30 +90,16 @@ exception create_task( void(* body)(), uint d )
 void terminate()
 {
   isr_off();
-  //remove from readyList
-  listobj *toDelObject = ReadyList->pHead->pNext;
-  TCB   *toDelTCB = toDelObject->pTask;
-  ReadyList->pHead->pNext =  ReadyList->pHead->pNext->pNext;
-  ReadyList->pHead->pNext->pNext->pPrevious = ReadyList->pHead->pNext;
-  //Set running task
-  insertion_sort(ReadyList);
-  RunningTask = ReadyList->pHead->pNext->pTask;
-  //Delete old task
-  free(toDelTCB);
-  free(toDelObject);
-  schedule();
-  LoadContext(); 
+  leavingObj = extract(ReadyList->pHead->pNext);
+  NextTask = ReadyList->pHead->pNext->pTask;
+  switch_to_stack_of_next_stack();
+  free(leavingObj->pTask);
+  free(leavingObj);
+  LoadContext_In_Terminate();
 }
 
 void run( void ) 
 {
-  //Initialize interrupt timer
-  TimerInt();
-  //Set the kernel in running mode
-  KernelMode = RUNNING;
-  //Enable interrupts
-  isr_on();
-  //Load context
-  schedule();
-  LoadContext();
+  NextTask = ReadyList->pHead->pNext->pTask;
+  LoadContext_In_Run();
 }
