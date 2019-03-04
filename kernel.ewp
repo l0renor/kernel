@@ -768,7 +768,7 @@
                 </option>
                 <option>
                     <name>IlinkIcfFile</name>
-                    <state>$TOOLKIT_DIR$\config\linker\Microchip\sam3x8e\sram.icf</state>
+                    <state>C:\Users\Leon\Documents\GitHub\kernel\sam3x8-sram_BigHeap.icf</state>
                 </option>
                 <option>
                     <name>IlinkIcfFileSlave</name>

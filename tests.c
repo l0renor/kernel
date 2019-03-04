@@ -20,8 +20,8 @@ void test_init_kernel()
   
   //readyListTests
   //Idle task
-  assert(ReadyList->pHead->pNext->pTask->DeadLine == UINT_MAX);
-  assert(ReadyList->pTail->pPrevious->pTask->DeadLine == UINT_MAX);
+  assert(ReadyList->pHead->pNext->pTask->Deadline == UINT_MAX);
+  assert(ReadyList->pTail->pPrevious->pTask->Deadline == UINT_MAX);
   assert(ReadyList->pHead->pNext->pNext == ReadyList->pTail);
   assert(ReadyList->pHead->pNext->pPrevious == ReadyList->pHead);
   assert(Ticks == 0);
@@ -39,13 +39,13 @@ void test_create_task_init()
 {
   init_kernel();
   assert(KernelMode == INIT);
-  assert(ReadyList->pHead->pNext->pTask->DeadLine == UINT_MAX);
-  assert(ReadyList->pTail->pPrevious->pTask->DeadLine == UINT_MAX);
+  assert(ReadyList->pHead->pNext->pTask->Deadline == UINT_MAX);
+  assert(ReadyList->pTail->pPrevious->pTask->Deadline == UINT_MAX);
   create_task(idle_function,100);
-  assert(ReadyList->pHead->pNext->pTask->DeadLine == 100);
-  assert(ReadyList->pHead->pNext->pNext->pTask->DeadLine == UINT_MAX);
-  assert(ReadyList->pTail->pPrevious->pPrevious->pTask->DeadLine == 100);
-  assert(ReadyList->pTail->pPrevious->pTask->DeadLine == UINT_MAX);
+  assert(ReadyList->pHead->pNext->pTask->Deadline == 100);
+  assert(ReadyList->pHead->pNext->pNext->pTask->Deadline == UINT_MAX);
+  assert(ReadyList->pTail->pPrevious->pPrevious->pTask->Deadline == 100);
+  assert(ReadyList->pTail->pPrevious->pTask->Deadline == UINT_MAX);
   
 }
 
@@ -54,8 +54,8 @@ void test_create_task_running()//this test ist called from the wrapper
   assert(KernelMode == RUNNING);
   create_task(idle_function,777);
   //assert new Task is in ready list
-  assert(ReadyList->pHead->pNext->pNext->pTask->DeadLine == 777);
-  assert(ReadyList->pTail->pPrevious->pPrevious->pTask->DeadLine == 777);
+  assert(ReadyList->pHead->pNext->pNext->pTask->Deadline == 777);
+  assert(ReadyList->pTail->pPrevious->pPrevious->pTask->Deadline == 777);
   
 }
 

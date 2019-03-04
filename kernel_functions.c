@@ -1,0 +1,7 @@
+#include "kernel_functions.h"
+#include "global_variables.c"
+#include "task_administration.c"
+#include "communication.c"
+#include "timing_functions.c"
+#include "interrupts.c"
+#include "helper_functions.c"

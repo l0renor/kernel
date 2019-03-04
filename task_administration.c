@@ -29,22 +29,23 @@ exception create_task( void(* body)(), uint d )
   }
   
   //Set deadline in TCB
-  pTCB->DeadLine = d;
+  pTCB->Deadline = d;
   
   //Set the TCB's PC to point to the task body
   pTCB->PC = body;
+  pTCB->SPSR = 0x21000000;
   
   //Set TCB's SP to point to the stack segment
   //First element on stack is omitted for safety reasons
   pTCB->StackSeg[STACK_SIZE-2] = 0x21000000; /* PSR */
   pTCB->StackSeg[STACK_SIZE-3] = (uint)body; /* PC */
-  pTCB->StackSeg[STACK_SIZE-4] = 0; /* LR */
   //Skip some Stack elements for r12, r3, r2, r1, r0.
   pTCB->SP = &( pTCB->StackSeg[STACK_SIZE-9] );
   
   //IF start-up mode THEN
   if (KernelMode == INIT)
   {
+    
     //Create ListObj for TCB
     listobj* o = create_listobj(pTCB);
     if ( o == NULL )
@@ -54,20 +55,14 @@ exception create_task( void(* body)(), uint d )
     }
     //Insert new task in Readylist
     sorted_insert(ReadyList, o);
-    isr_on();
   }
   else
   {
-    static bool is_first_execution = TRUE;
+    
     //Disable interrupts
     isr_off();
     //Save context
-    SaveContext();
-    //IF "first execution" THEN
-    if ( is_first_execution )
-    {
-      //Set: "not first execution any more"
-      is_first_execution = FALSE;
+   
       //Create ListObj for TCB
       listobj* o = create_listobj(pTCB);
       if ( o == NULL )
@@ -76,7 +71,9 @@ exception create_task( void(* body)(), uint d )
         return FAIL;
       }
       //Insert new task in Readylist
+      PreviousTask = ReadyList->pHead->pNext;
       sorted_insert(ReadyList, o);
+      NextTask = ReadyList->pHead->pNext->pTask;
       
       //Load Context
       schedule();
