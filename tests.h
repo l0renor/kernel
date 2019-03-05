@@ -23,3 +23,7 @@ void stage_one_test_case();
 void stage_one_test_case_task_one();
 void stage_one_test_case_task_two();
 void stage_one_test_case_task_wait();
+
+void test_messaging_basic();
+void test_messaging_basic_1();
+void test_messaging_basic_2();

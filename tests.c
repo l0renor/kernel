@@ -97,7 +97,7 @@ void test_messaging_basic()
   init_kernel();
   create_task(test_messaging_basic_1,1000);
   create_task(test_messaging_basic_2,1500);
-  mailBoxes[0] = createMailbox(1, sizeof(int));
+  mailBoxes[0] = create_mailbox(1, sizeof(int));
   run();
 }
 
@@ -117,25 +117,47 @@ void test_messaging_basic_1()
   
   // STEP 3: send_no_wait -> receive_no_wait
   *data = 3;
-  exception result = send_no_wait(mailBoxes[0],data);
+  result = send_no_wait(mailBoxes[0],data);
   assert(result == OK);
   set_deadline(deadline()+1000);
   
   // STEP 4: receive_no_wait -> send_no_wait => FAILURE
-  
+  result = receive_no_wait(mailBoxes[0],data);
+  assert(result == FAIL);
+  assert(*data == 3);
+  set_deadline(deadline()+1000);
   
   // Receive to clear mBox
+  receive_no_wait(mailBoxes[0],data);
+  assert(*data == 4);
   
   // STEP 5: send_wait -> receive_no_wait
+  *data = 5;
+  result = send_wait(mailBoxes[0],data);
+  assert(*data == 5);
   
   // STEP 6: receive_no_wait -> send_wait => FAILURE
-  
+  result = receive_no_wait(mailBoxes[0],data);
+  assert(result == FAIL);
+  assert(*data == 5);
+  set_deadline(deadline()+1000);
   
   // Receive to clear mBox
+  receive_no_wait(mailBoxes[0],data);
+  assert(*data == 6);
   
   // STEP 7: send_no_wait -> receive_wait
+  *data = 7;
+  result = send_no_wait(mailBoxes[0],data);
+  assert(result == OK);
+  set_deadline(deadline()+1000);
   
   // STEP 8: receive_wait -> send_no_wait
+  result = receive_wait(mailBoxes[0],data);
+  assert(result == OK);
+  assert(*data == 8);
+  
+  // TERMINATION AFTER ALL TESTS
   terminate();
 }
 
@@ -146,15 +168,48 @@ void test_messaging_basic_2()
   // STEP 1: send_wait -> receive_wait
   exception result = receive_wait( mailBoxes[0], data );
   assert(result == OK);
-  assert(*data == 6);
+  assert(*data == 1);
   
   // STEP 2: receive_wait -> send_wait
-  *data = 7;
+  *data = 2;
+  result = send_wait(mailBoxes[0],data); 
+  assert(result == OK);
+  
+  // STEP 3: send_no_wait -> receive_no_wait
+  result = receive_no_wait(mailBoxes[0],data);
+  assert(result == OK);
+  assert(*data == 3);
+  set_deadline(deadline()+1000);
+  
+  // STEP 4: receive_no_wait -> send_no_wait => FAILURE
+  *data = 4;
+  result = send_no_wait(mailBoxes[0],data);
+  assert(result == OK);
+  set_deadline(deadline()+1000);
+  
+  // STEP 5: send_wait -> receive_no_wait
+  result = receive_no_wait(mailBoxes[0],data);
+  assert(result == OK);
+  assert(*data = 5);
+  set_deadline(deadline()+1000);
+  
+  // STEP 6: receive_no_wait -> send_wait => FAILURE
+  *data = 6;
   result = send_wait(mailBoxes[0],data);
   assert(result == OK);
   
-  // 
+  // STEP 7: send_no_wait -> receive_wait
+  result = receive_wait(mailBoxes[0],data);
+  assert(result == OK);
+  assert(*data == 7);
   
+  // STEP 8: receive_wait -> send_no_wait
+  *data = 8;
+  result = send_no_wait(mailBoxes[0],data);
+  assert(result == OK);
+  set_deadline(deadline()+1000);
+  
+  // TERMINATION
   terminate();
 }
 

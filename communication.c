@@ -207,9 +207,7 @@ exception send_no_wait( mailbox* mBox, void* pData )
       sorted_insert( ReadyList, m->pBlock);
       free(m); //delete old msg
       NextTask = getFirstRL();
-      SwitchContext();  
-    
-      
+      SwitchContext();
     }
     else
     {
