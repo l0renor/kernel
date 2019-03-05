@@ -61,7 +61,7 @@ void set_deadline( uint deadline )
 void TimerInt( void )
 {
   Ticks++;
-  
+  PreviousTask = getFirstRL();
   // check TimerList
   listobj* current = TimerList->pHead->pNext;
   while ( current->pTask != NULL )
@@ -100,6 +100,7 @@ void TimerInt( void )
       sorted_insert(ReadyList, current);
     }
   }
+  NextTask = getFirstRL();
 }
 
 

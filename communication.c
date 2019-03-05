@@ -8,7 +8,7 @@ mailbox* create_mailbox( uint nMessages, uint nDataSize)
   if ( result != NULL )
   {
     result->nDataSize = nDataSize;
-    result->nMessages = nMessages;
+    result->nMaxMessages = nMessages;
     result->nBlockedMsg = 0;
     result->pHead = create_message(NULL,0);
     result->pTail = create_message(NULL,0);
@@ -57,11 +57,13 @@ exception send_wait( mailbox* mBox, void* pData )
   }
   else
   {
+    // sending task will wait
     msg* newM = (msg *)calloc(1,sizeof(msg));
     if(newM == NULL){
       return DEADLINE_REACHED;
     }
     newM->pData = pData;
+    newM->pBlock = ReadyList->pHead->pNext;
     push_mailbox_tail(mBox,newM);
     ReadyList->pHead->pNext->pMessage = newM;
     PreviousTask = ReadyList->pHead->pNext->pTask;
@@ -135,7 +137,9 @@ exception receive_wait( mailbox* mBox, void* pData )
     if(message == NULL){
       return DEADLINE_REACHED;
     }
+    message->pData = pData;
     //Add Message to the Mailbox
+    message->pBlock = ReadyList->pHead->pNext; 
     push_mailbox_tail(mBox, message);
     //IF Mailbox is full
     if ( mBox->nMaxMessages == mBox->nMessages )
@@ -149,6 +153,7 @@ exception receive_wait( mailbox* mBox, void* pData )
     else
     {
       mBox->nMessages++;
+      mBox->nBlockedMsg--;
     }
     ReadyList->pHead->pNext->pMessage = message;
     //Update PreviousTask

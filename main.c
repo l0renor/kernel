@@ -11,13 +11,13 @@ void main(void)
   SCB->SHP[((uint32_t)(SysTick_IRQn) & 0xF)-4] = (0xE0);
   isr_off();
   
-  init_kernel();
+  //init_kernel();
   
   // Code here
-  
+  stage_one_test_case();
   
   
   // Code end
   
-  run();
+  //run();
 }

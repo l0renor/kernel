@@ -103,17 +103,18 @@ static msg* pop_mailbox_head( mailbox* mBox )
 {
   msg* result =  mBox->pHead->pNext;
   //change pointers
-  mBox->pHead->pNext = result->pNext;
-  result->pPrevious = mBox->pHead;
+  mBox->pHead->pNext = mBox->pHead->pNext->pNext;
+  mBox->pHead->pNext->pPrevious = mBox->pHead;
   return result;
 }
 
 
 static void push_mailbox_tail( mailbox* mBox, msg* m )
 {
+  msg* lastMsg = mBox->pTail->pPrevious;
   m->pNext = mBox->pTail;
-  m->pPrevious = mBox->pTail->pPrevious;
-  mBox->pTail->pPrevious->pNext = m;
+  m->pPrevious = lastMsg;
+  lastMsg->pNext = m;
   mBox->pTail->pPrevious = m;
 }
 
