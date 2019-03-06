@@ -81,12 +81,20 @@ exception send_wait( mailbox* mBox, void* pData )
     //IF Mailbox is full
     if ( mBox->nMessages == mBox->nMaxMessages )
     {
-      pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
+      msg* head = pop_mailbox_head(mBox);
+      remove_from_list(WaitingList, head->pBlock);
+      head->pBlock->nTCnt = 1;
+      sorted_insert(ReadyList, head->pBlock);
+      free(head);
     }
     else
     {
+      mBox->nBlockedMsg++; 
       mBox->nMessages++;
     }
+    
+    NextTask = getFirstRL()//later in case the thrown out task has lower deadline than RL->head
+    
   }
   
   //Update NextTask
@@ -106,7 +114,7 @@ exception send_wait( mailbox* mBox, void* pData )
   {
     isr_off();
     remove_running_task_from_mailbox(mBox);
-    mBox->nMessages = mBox->nMessages - 1;
+    mBox->nMessages--;
     isr_on();
     return DEADLINE_REACHED;
   }

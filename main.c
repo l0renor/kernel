@@ -14,7 +14,7 @@ void main(void)
   //init_kernel();
   
   // Code here
-  test_messaging_basic();
+  test_messaging_exceptions();
   
   
   // Code end
