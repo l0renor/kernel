@@ -11,7 +11,8 @@ void insertion_sort( list* l )
     current = next; 
   }  
   //@TODO: Free memory space taken by original l
-  l = sorted;
+  l->pHead = sorted->pHead;
+  l->pTail = sorted->pTail;
 } 
 
 // Only call if l is already sorted!

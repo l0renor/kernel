@@ -14,7 +14,7 @@ void main(void)
   //init_kernel();
   
   // Code here
-  stage_one_test_case();
+  test_messaging_basic();
   
   
   // Code end
