@@ -99,7 +99,11 @@ void TimerInt( void )
       //      next->pPrevious = previous;
       //      previous->pNext = next;
       //      free(current->pMessage);
-      sorted_insert(ReadyList, current);
+      sorted_insert(ReadyList, toMove);
+    }
+    else
+    {
+      current = current->pNext;
     }
   }
   NextTask = getFirstRL();
