@@ -74,8 +74,8 @@ exception send_wait( mailbox* mBox, void* pData )
     //Add message to the mailbox
     push_mailbox_tail(mBox,message);
     //Move sending task from ReadyList to WaitingList
-    remove_from_list(ReadyList,toMove);
-    sorted_insert( WaitingList, toMove);
+    remove_from_list(ReadyList, waiter);
+    sorted_insert(WaitingList, waiter);
     //Change mailbox values
     mBox->nBlockedMsg++;
     //IF Mailbox is full
@@ -133,6 +133,7 @@ exception receive_wait( mailbox* mBox, void* pData )
   //IF send Message is waiting THEN
   if (mBox->nMessages > 0 && mBox->nBlockedMsg >= 0)
   {
+    
     msg* sender = pop_mailbox_head(mBox);
     mBox->nMessages--;
     if (mBox->nBlockedMsg > 0) 
