@@ -68,8 +68,9 @@ exception send_wait( mailbox* mBox, void* pData )
     listobj* toMove = ReadyList->pHead->pNext;
     remove_from_list(ReadyList,toMove);
     sorted_insert( WaitingList, toMove);
+    //IF mailbox is full
     if(mBox->nMessages == mBox->nMaxMessages)
-    {//mailbox is full
+    {
       //remove old msg now nMessages is correct again
       msg* head = pop_mailbox_head(mBox);
       remove_from_list(WaitingList, head->pBlock);
@@ -83,7 +84,7 @@ exception send_wait( mailbox* mBox, void* pData )
       mBox->nMessages++;
     }
     
-    NextTask = ReadyList->pHead->pNext->pTask;//later in case the thrown out task has lower deadline than RL->head
+    NextTask = getFirstRL()//later in case the thrown out task has lower deadline than RL->head
     
   }
   
@@ -101,7 +102,7 @@ exception send_wait( mailbox* mBox, void* pData )
   {
     isr_off();
     remove_running_task_from_mailbox(mBox);
-    mBox->nMessages = mBox->nMessages - 1;
+    mBox->nMessages--;
     isr_on();
     return DEADLINE_REACHED;
   }
