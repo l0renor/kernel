@@ -27,3 +27,8 @@ void stage_one_test_case_task_wait();
 void test_messaging_basic();
 void test_messaging_basic_1();
 void test_messaging_basic_2();
+
+void test_messaging_exceptions();
+void test_1_messaging_exceptions();
+void test_2_messaging_exceptions();
+void test_3_messaging_exceptions();

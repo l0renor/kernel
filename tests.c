@@ -17,7 +17,7 @@ void test_sort(){
   ReadyList->pHead->pNext->pTask->Deadline = 500;
   insertion_sort(ReadyList);
   
-
+  
 }
 
 void test_init_kernel()
@@ -36,10 +36,10 @@ void test_init_kernel()
   assert(ReadyList->pHead->pNext->pPrevious == ReadyList->pHead);
   assert(Ticks == 0);
   //head
-   assert(ReadyList->pHead->pPrevious == NULL);
-   //tail
-   assert(ReadyList->pTail->pNext == NULL);
-
+  assert(ReadyList->pHead->pPrevious == NULL);
+  //tail
+  assert(ReadyList->pTail->pNext == NULL);
+  
   assert(ReadyList->pHead->pPrevious == NULL);
   //tail
   assert(ReadyList->pTail->pNext == NULL);
@@ -88,7 +88,7 @@ void stage_one_test_case_task_one(){
   exception returncode =  receive_wait( mailBoxes[0], data );
   assert(*data == 7);
   terminate();
-
+  
 }
 
 void stage_one_test_case_task_two()
@@ -119,7 +119,7 @@ void test_messaging_basic_1()
   *data = 1;
   exception result = send_wait(mailBoxes[0],data);
   assert(result == OK);
-
+  
   // STEP 2: receive_wait -> send_wait
   result =  receive_wait( mailBoxes[0], data );
   assert(result == OK);
@@ -227,5 +227,50 @@ void stage_one_test_case_task_wait()
 {
   wait(500);
   terminate();
+}
+
+void test_messaging_exceptions(){
+  init_kernel();
+  create_task(test_1_messaging_exceptions,1000);
+  create_task(test_2_messaging_exceptions,1500);
+  //create_task(test_3_messaging_exceptions,2000);
+  mailBoxes[0] = create_mailbox(1, sizeof(int)); //size 1 mBox
+  //mailBoxes[0] = create_mailbox(6, sizeof(int)); //size 6 mBox
+  run();
+}  
+
+void test_1_messaging_exceptions(){
+  int* data = (int*) malloc(sizeof(int));
+  //1 Test 2 tasks send_wait in mailbox size 1
+  *data = 1;
+  exception result = send_wait(mailBoxes[0],data); 
+  int* mailData = (int*)mailBoxes[0]->pHead->pNext->pData;
+  assert(*mailData == 2);
+  assert(mailBoxes[0]->nMessages == 1);
+  assert(mailBoxes[0]->nBlockedMsg == 1);
+  
+  
+}
+
+void test_2_messaging_exceptions()
+{
+  int* data = (int*) malloc(sizeof(int));
+  *data = 2;
+  int* mailData = (int*)mailBoxes[0]->pHead->pNext->pData;
+  assert(*mailData == 1);
+  assert(mailBoxes[0]->nMessages == 1);
+  assert(mailBoxes[0]->nBlockedMsg == 1);
+  exception result = send_wait(mailBoxes[0],data);
+  
+  
+  
+}
+
+void test_3_messaging_exceptions()
+{
+  int* mailData = (int*)mailBoxes[0]->pHead->pNext->pData;
+  assert(*mailData == 2);
+  assert(mailBoxes[0]->nMessages == 1);
+  assert(mailBoxes[0]->nBlockedMsg == 1);
 }
 
