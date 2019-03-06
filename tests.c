@@ -265,40 +265,54 @@ void test_2_messaging_exceptions()
 }
 
 
-void test_messaging_exceptionsRC(){
+void test_messaging_exceptionsRcv(){
   init_kernel();
-  create_task(test_1_messaging_exceptions,1000);
-  create_task(test_2_messaging_exceptions,1500);
-  //create_task(test_3_messaging_exceptions,2000);
+  create_task(test_1_messaging_exceptionsRcv,1000);
+  create_task(test_2_messaging_exceptionsRcv,1500);
   mailBoxes[0] = create_mailbox(1, sizeof(int)); //size 1 mBox
   //mailBoxes[0] = create_mailbox(6, sizeof(int)); //size 6 mBox
   run();
 }  
 
-void test_1_messaging_exceptions(){
+void test_1_messaging_exceptionsRcv(){
   int* data = (int*) malloc(sizeof(int));
   //STEP 1: 2 tasks send_wait in mailbox size 1
   *data = 1;
-  exception result = send_wait(mailBoxes[0],data); 
-  int* mailData = (int*)mailBoxes[0]->pHead->pNext->pData;
-  assert(*mailData == 2);
+  exception result = receive_wait(mailBoxes[0],data); 
   assert(mailBoxes[0]->nMessages == 1);
-  assert(mailBoxes[0]->nBlockedMsg == 1);
+  assert(mailBoxes[0]->nBlockedMsg == -1);
   
   terminate();
 }
 
-void test_2_messaging_exceptions()
+void test_2_messaging_exceptionsRcv()
 {
   int* data = (int*) malloc(sizeof(int));
-  *data = 2;
-  int* mailData = (int*)mailBoxes[0]->pHead->pNext->pData;
-  assert(*mailData == 1);
   assert(mailBoxes[0]->nMessages == 1);
-  assert(mailBoxes[0]->nBlockedMsg == 1);
-  exception result = send_wait(mailBoxes[0],data);  
+  assert(mailBoxes[0]->nBlockedMsg == -1);  
+  exception result = receive_wait(mailBoxes[0],data); 
+  
   terminate();
 }
+
+void test_messaging_exceptions_snd_nW(){
+  init_kernel();
+  create_task(test_1_messaging_exceptions_snd_nW,1000);
+  mailBoxes[0] = create_mailbox(3, sizeof(int)); //size 3 mBox
+  run();
+
+}
+void test_1_messaging_exceptions_snd_nW(){
+  int* data = (int*) malloc(sizeof(int));
+  *data = 1;
+  exception result = send_no_wait(mailBoxes[0],data);
+  int* mailData = (int*)mailBoxes[0]->pHead->pNext->pData;
+  
+
+
+}
+
+
 
 
 

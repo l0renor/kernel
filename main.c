@@ -7,14 +7,14 @@
 void main(void)
 {
   SystemInit();
-  SysTick_Config(100000);
+  SysTick_Config(1000);
   SCB->SHP[((uint32_t)(SysTick_IRQn) & 0xF)-4] = (0xE0);
   isr_off();
   
   //init_kernel();
   
   // Code here
-  test_messaging_exceptions();
+  test_messaging_exceptionsRcv();
   
   
   // Code end

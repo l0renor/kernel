@@ -39,9 +39,10 @@ exception send_wait( mailbox* mBox, void* pData )
 {
   //Disable interrupts
   isr_off();
+  //IF receiving tasks waiting
   if(mBox->nBlockedMsg < 0)
   {
-    //receiving tasks waiting
+    
     msg* m = pop_mailbox_head(mBox);
     //copy senders data into reciver
     memcpy(m->pData,pData,mBox->nDataSize);
@@ -84,7 +85,7 @@ exception send_wait( mailbox* mBox, void* pData )
       mBox->nMessages++;
     }
     
-    NextTask = getFirstRL()//later in case the thrown out task has lower deadline than RL->head
+    NextTask = getFirstRL();//later in case the thrown out task has lower deadline than RL->head
     
   }
   
@@ -157,6 +158,13 @@ exception receive_wait( mailbox* mBox, void* pData )
     //Add Message to the Mailbox
     message->pBlock = ReadyList->pHead->pNext; 
     push_mailbox_tail(mBox, message);
+    //Update PreviousTask
+    PreviousTask = getFirstRL();
+    ReadyList->pHead->pNext->pMessage = message;
+    //Move receiving task from Readylist to Waitinglist
+    listobj* runningTaskObject = ReadyList->pHead->pNext;
+    remove_from_list(ReadyList, runningTaskObject);
+    sorted_insert(WaitingList, runningTaskObject);
     //IF Mailbox is full
     if ( mBox->nMaxMessages == mBox->nMessages )
     {
@@ -170,14 +178,7 @@ exception receive_wait( mailbox* mBox, void* pData )
     {
       mBox->nMessages++;
       mBox->nBlockedMsg--;
-    }
-    ReadyList->pHead->pNext->pMessage = message;
-    //Update PreviousTask
-    PreviousTask = getFirstRL();
-    //Move receiving task from Readylist to Waitinglist
-    listobj* runningTaskObject = ReadyList->pHead->pNext;
-    remove_from_list(ReadyList, runningTaskObject);
-    sorted_insert(WaitingList, runningTaskObject);
+    }   
     //Update NextTask
     NextTask = getFirstRL();
   }
@@ -237,7 +238,7 @@ exception send_no_wait( mailbox* mBox, void* pData )
     
     //Freeing the memory space of the old message
     free(m);
-
+    
     //Switch context
     if ( NextTask == PreviousTask )
     {
