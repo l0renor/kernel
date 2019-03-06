@@ -133,8 +133,9 @@ exception receive_wait( mailbox* mBox, void* pData )
   //IF send Message is waiting THEN
   if (mBox->nMessages > 0 && mBox->nBlockedMsg >= 0)
   {
-    
+    //Remove sending task's Message struct from the Mailbox
     msg* sender = pop_mailbox_head(mBox);
+    //Change counters of mailbox
     mBox->nMessages--;
     if (mBox->nBlockedMsg > 0) 
     {
@@ -151,9 +152,11 @@ exception receive_wait( mailbox* mBox, void* pData )
     }
     else 
     {
+      //Free senders data area
       void* p = realloc(sender->pData, mBox->nDataSize);
       free(p);
     }
+    //Free senders memory
     free(sender);
   }
   else
