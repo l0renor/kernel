@@ -39,40 +39,48 @@ exception send_wait( mailbox* mBox, void* pData )
 {
   //Disable interrupts
   isr_off();
+  //Update PreviousTask
+  PreviousTask = getFirstRL();
+  //IF receiving task is waiting THEN
   if(mBox->nBlockedMsg < 0)
   {
-    //receiving tasks waiting
-    msg* m = pop_mailbox_head(mBox);
-    //copy senders data into reciver
-    memcpy(m->pData,pData,mBox->nDataSize);
-    remove_from_list( WaitingList, m->pBlock);
-    PreviousTask = getFirstRL();
-    sorted_insert( ReadyList, m->pBlock);
-    NextTask = getFirstRL();
-
-    free(m);
+    //Remove receiving task's Message struct from the Mailbox
+    msg* receiver = pop_mailbox_head(mBox);
+    //Copy sender's data to the data area of the receivers Message
+    memcpy(receiver->pData,pData,mBox->nDataSize);
+    //Move sending task from ReadyList to WaitingList
+    remove_from_list(WaitingList, receiver->pBlock);
+    sorted_insert( ReadyList, receiver->pBlock);
+    //Free receivers data area
+    free(receiver);
+    //Change mailbox values
     mBox->nMessages--;
-    mBox->nBlockedMsg++; //reciver not waiting anymore
+    mBox->nBlockedMsg++;
   }
   else
   {
-    // sending task will wait
-    msg* newM = (msg *)calloc(1,sizeof(msg));
-    if(newM == NULL){
+    //Allocate a Message structure
+    msg* message = (msg *)calloc(1,sizeof(msg));
+    if(message == NULL){
       return DEADLINE_REACHED;
     }
-    newM->pData = pData;
-    newM->pBlock = ReadyList->pHead->pNext;
-    push_mailbox_tail(mBox,newM);
-    ReadyList->pHead->pNext->pMessage = newM;
-    PreviousTask = ReadyList->pHead->pNext->pTask;
-    listobj* toMove = ReadyList->pHead->pNext;
+    //Set data pointer
+    message->pData = pData;
+    //Get listobj of current task    
+    listobj* waiter = ReadyList->pHead->pNext;
+    //Set blocked listobj pointer and other way round
+    message->pBlock = waiter;
+    waiter->pMessage = message;
+    //Add message to the mailbox
+    push_mailbox_tail(mBox,message);
+    //Move sending task from ReadyList to WaitingList
     remove_from_list(ReadyList,toMove);
     sorted_insert( WaitingList, toMove);
-    NextTask = ReadyList->pHead->pNext->pTask;
-    mBox->nBlockedMsg = mBox->nBlockedMsg + 1;//new sender Task waiting 
-    if(mBox->nMessages == mBox->nMaxMessages)
-    {//mailbox is full
+    //Change mailbox values
+    mBox->nBlockedMsg++;
+    //IF Mailbox is full
+    if ( mBox->nMessages == mBox->nMaxMessages )
+    {
       pop_mailbox_head(mBox);//remove old msg now nMessages is correct again
     }
     else
@@ -80,6 +88,9 @@ exception send_wait( mailbox* mBox, void* pData )
       mBox->nMessages++;
     }
   }
+  
+  //Update NextTask
+  NextTask = getFirstRL();
   
   //Switch context
   if ( PreviousTask == NextTask ) 
@@ -109,6 +120,8 @@ exception receive_wait( mailbox* mBox, void* pData )
 {
   //Disable interrupt
   isr_off();
+  //Update PreviousTask
+  PreviousTask = getFirstRL();
   //IF send Message is waiting THEN
   if (mBox->nMessages > 0 && mBox->nBlockedMsg >= 0)
   {
@@ -123,19 +136,14 @@ exception receive_wait( mailbox* mBox, void* pData )
     //IF Message was of wait type THEN
     if ( sender->pBlock != NULL )
     {
-      //Update PreviousTask
-      PreviousTask = getFirstRL();
       //Move sending task to ReadyList
       remove_from_list(WaitingList, sender->pBlock);
       sorted_insert(ReadyList, sender->pBlock);
-      //Update NextTask
-      NextTask = getFirstRL();
     }
     else 
     {
       void* p = realloc(sender->pData, mBox->nDataSize);
       free(p);
-      PreviousTask = NextTask = getFirstRL();
     }
     free(sender);
   }
@@ -165,15 +173,14 @@ exception receive_wait( mailbox* mBox, void* pData )
       mBox->nBlockedMsg--;
     }
     ReadyList->pHead->pNext->pMessage = message;
-    //Update PreviousTask
-    PreviousTask = getFirstRL();
     //Move receiving task from Readylist to Waitinglist
     listobj* runningTaskObject = ReadyList->pHead->pNext;
     remove_from_list(ReadyList, runningTaskObject);
     sorted_insert(WaitingList, runningTaskObject);
-    //Update NextTask
-    NextTask = getFirstRL();
   }
+  
+  //Update NextTask
+  NextTask = getFirstRL();
   
   //Switch context
   if ( PreviousTask == NextTask ) 
@@ -243,23 +250,23 @@ exception send_no_wait( mailbox* mBox, void* pData )
   }
   else
   {
-    msg* newM = (msg *)calloc(1,sizeof(msg));
-    if ( newM == NULL ) 
+    msg* message = (msg *)calloc(1,sizeof(msg));
+    if ( message == NULL ) 
     {
       return FAIL;
     }
-    newM->pData = calloc(mBox->nDataSize,sizeof(char));
-    if ( newM->pData == NULL ) 
+    message->pData = calloc(mBox->nDataSize,sizeof(char));
+    if ( message->pData == NULL ) 
     {
       return FAIL;
     }
-    memcpy(newM->pData,pData,mBox->nDataSize);
+    memcpy(message->pData,pData,mBox->nDataSize);
     if(mBox->nMessages == mBox->nMaxMessages)//Box is full
     {
       msg* oldM = pop_mailbox_head(mBox);
       free(oldM);
     }
-    push_mailbox_tail(mBox,newM);
+    push_mailbox_tail(mBox,message);
   }
   return OK;
 }
