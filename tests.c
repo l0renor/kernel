@@ -9,6 +9,16 @@ void TestWrapper( void (* test_in_running_mode)() )
   run();
   // Continues in test_in_running_mode
 }
+void test_sort(){
+  init_kernel();
+  create_task(idle_function,100);
+  create_task(idle_function,200);
+  create_task(idle_function,300);
+  ReadyList->pHead->pNext->pTask->Deadline = 500;
+  insertion_sort(ReadyList);
+  
+
+}
 
 void test_init_kernel()
 {
@@ -134,7 +144,7 @@ void test_messaging_basic_1()
   // STEP 5: send_wait -> receive_no_wait
   *data = 5;
   result = send_wait(mailBoxes[0],data);
-  assert(*data == 5);
+  assert(result == OK);
   
   // STEP 6: receive_no_wait -> send_wait => FAILURE
   result = receive_no_wait(mailBoxes[0],data);
@@ -191,12 +201,12 @@ void test_messaging_basic_2()
   result = receive_no_wait(mailBoxes[0],data);
   assert(result == OK);
   assert(*data = 5);
-  set_deadline(deadline()+1000);
   
   // STEP 6: receive_no_wait -> send_wait => FAILURE
   *data = 6;
   result = send_wait(mailBoxes[0],data);
   assert(result == OK);
+  set_deadline(deadline()+1000);
   
   // STEP 7: send_no_wait -> receive_wait
   result = receive_wait(mailBoxes[0],data);

@@ -109,7 +109,10 @@ exception receive_wait( mailbox* mBox, void* pData )
   {
     msg* sender = pop_mailbox_head(mBox);
     mBox->nMessages--;
-    mBox->nBlockedMsg--;
+    if (mBox->nBlockedMsg > 0) 
+    {
+      mBox->nBlockedMsg--;
+    }
     //Copy sender's data to receiving task's data area
     memcpy(pData, sender->pData, mBox->nDataSize);
     //IF Message was of wait type THEN
@@ -127,6 +130,7 @@ exception receive_wait( mailbox* mBox, void* pData )
     {
       void* p = realloc(sender->pData, mBox->nDataSize);
       free(p);
+      PreviousTask = NextTask = getFirstRL();
     }
     free(sender);
   }
@@ -214,10 +218,14 @@ exception send_no_wait( mailbox* mBox, void* pData )
       msg* newM = (msg *)calloc(1,sizeof(msg));
       newM->pData = calloc(mBox->nDataSize,sizeof(char));
       memcpy(newM->pData,pData,mBox->nDataSize);
-      if(mBox->nMessages == mBox->nMaxMessages)//Box is full
+      if(mBox->nMessages == mBox->nMaxMessages) //Box is full
       {
         msg* oldM = pop_mailbox_head(mBox);
         free(oldM);
+      }
+      else
+      {
+        mBox->nMessages++;
       }
       push_mailbox_tail(mBox,newM);
     }
@@ -229,14 +237,17 @@ exception receive_no_wait( mailbox* mBox, void* pData )
 {
   //Disable interrupt
   isr_off();
-  static exception message_received = FAIL;
+  exception message_received = FAIL;
   //IF send Message is waiting THEN
   if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )
   {
     message_received = OK;
     msg* sender = pop_mailbox_head(mBox);
     mBox->nMessages--;
-    mBox->nBlockedMsg--;
+    if (mBox->nBlockedMsg > 0) 
+    {
+      mBox->nBlockedMsg--;
+    }
     //Copy sender's data to receiving task's data area
     memcpy(pData, sender->pData, mBox->nDataSize);
     //IF Message was of wait type THEN
