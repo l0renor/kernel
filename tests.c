@@ -303,10 +303,40 @@ void test_messaging_exceptions_snd_nW(){
 
 }
 void test_1_messaging_exceptions_snd_nW(){
-  int* data = (int*) malloc(sizeof(int));
+   int* data = (int*) malloc(sizeof(int));
+  //first msg 
   *data = 1;
   exception result = send_no_wait(mailBoxes[0],data);
   int* mailData = (int*)mailBoxes[0]->pHead->pNext->pData;
+  assert(*mailData==1);
+  assert(mailBoxes[0]->nBlockedMsg == 0);
+  assert(mailBoxes[0]->nMessages == 1);
+  //second msg
+  *data = 2;
+  result = send_no_wait(mailBoxes[0],data);
+  mailData = (int*)mailBoxes[0]->pHead->pNext->pNext->pData;
+  assert(*mailData==2);
+  assert(mailBoxes[0]->nBlockedMsg == 0);
+  assert(mailBoxes[0]->nMessages == 2);
+  //third msg
+  *data = 3;
+  result = send_no_wait(mailBoxes[0],data);
+  mailData = (int*)mailBoxes[0]->pHead->pNext->pNext->pNext->pData;
+  assert(*mailData==3);
+  assert(mailBoxes[0]->nBlockedMsg == 0);
+  assert(mailBoxes[0]->nMessages == 3);
+  //forth  msg -> throw out
+  *data = 4;
+  result = send_no_wait(mailBoxes[0],data);
+  mailData = (int*)mailBoxes[0]->pHead->pNext->pNext->pNext->pData;
+  assert(*mailData==4);
+  mailData = (int*)mailBoxes[0]->pHead->pNext->pNext->pData;
+  assert(*mailData==3);
+  mailData = (int*)mailBoxes[0]->pHead->pNext->pData;
+  assert(*mailData==2);
+  assert(mailBoxes[0]->nBlockedMsg == 0);
+  assert(mailBoxes[0]->nMessages == 3);
+  terminate();
   
 
 

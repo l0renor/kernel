@@ -14,7 +14,7 @@ void main(void)
   //init_kernel();
   
   // Code here
-  test_messaging_exceptionsRcv();
+  test_messaging_exceptions_snd_nW();
   
   
   // Code end

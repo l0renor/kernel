@@ -261,6 +261,7 @@ exception send_no_wait( mailbox* mBox, void* pData )
   }
   else
   {
+    isr_on();
     msg* message = (msg *)calloc(1,sizeof(msg));
     if ( message == NULL ) 
     {
@@ -276,8 +277,10 @@ exception send_no_wait( mailbox* mBox, void* pData )
     {
       msg* oldM = pop_mailbox_head(mBox);
       free(oldM);
+      mBox->nMessages--;
     }
     push_mailbox_tail(mBox,message);
+    mBox->nMessages++;
   }
   return OK;
 }
