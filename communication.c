@@ -320,12 +320,13 @@ exception send_no_wait( mailbox* mBox, void* pData )
 
 exception receive_no_wait( mailbox* mBox, void* pData )
 {
-  //Disable interrupt
-  isr_off();
   exception message_received = FAIL;
   //IF send Message is waiting THEN
   if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )
   {
+	//Disable interrupt
+    isr_off();
+	
     message_received = OK;
 	//Update PreviousTask
     PreviousTask = getFirstRL();
