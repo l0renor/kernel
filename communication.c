@@ -37,7 +37,6 @@ exception remove_mailbox( mailbox* mBox )
 
 exception send_wait( mailbox* mBox, void* pData )
 {
-  static volatile bool is_first_execution = TRUE;
   //Disable interrupts
   isr_off();
   if(mBox->nBlockedMsg < 0)
@@ -47,13 +46,13 @@ exception send_wait( mailbox* mBox, void* pData )
     //copy senders data into reciver
     memcpy(m->pData,pData,mBox->nDataSize);
     remove_from_list( WaitingList, m->pBlock);
-    PreviousTask = ReadyList->pHead->pNext->pTask;
+    PreviousTask = getFirstRL();
     sorted_insert( ReadyList, m->pBlock);
-    NextTask = ReadyList->pHead->pNext->pTask;
+    NextTask = getFirstRL();
 
     free(m);
-    mBox->nMessages = mBox->nMessages - 1;
-    mBox->nBlockedMsg = mBox->nBlockedMsg + 1; //reciver not waiting anymore
+    mBox->nMessages--;
+    mBox->nBlockedMsg++; //reciver not waiting anymore
   }
   else
   {
@@ -78,12 +77,19 @@ exception send_wait( mailbox* mBox, void* pData )
     }
     else
     {
-      mBox->nMessages = mBox->nMessages + 1;
+      mBox->nMessages++;
     }
   }
-  SwitchContext();
   
-  
+  //Switch context
+  if ( PreviousTask == NextTask ) 
+  {
+    isr_on();
+  }
+  else
+  {
+    SwitchContext();
+  }
   
   if(deadline() <= ticks() )
   {
@@ -95,7 +101,6 @@ exception send_wait( mailbox* mBox, void* pData )
   }
   else
   {
-    //IS pepsi 
     return OK;
   }
 }
@@ -167,7 +172,14 @@ exception receive_wait( mailbox* mBox, void* pData )
   }
   
   //Switch context
-  SwitchContext();
+  if ( PreviousTask == NextTask ) 
+  {
+    isr_on();
+  }
+  else
+  {
+    SwitchContext();
+  }
   
   if (deadline() - ticks() <= 0)
   {
@@ -194,34 +206,57 @@ exception receive_wait( mailbox* mBox, void* pData )
 
 exception send_no_wait( mailbox* mBox, void* pData )
 {
-    if(mBox->nBlockedMsg < 0)
+  //Disable interrupt
+  isr_off();
+  if(mBox->nBlockedMsg < 0)
+  {
+    //receiving tasks waiting
+    msg* m = pop_mailbox_head(mBox);
+    //copy senders data into reciver
+    
+    memcpy(m->pData,pData,mBox->nDataSize);
+    
+    //Update PreviousTask
+    PreviousTask = getFirstRL();
+    //Move receiving task to ReadyList
+    remove_from_list( WaitingList, m->pBlock);
+    sorted_insert( ReadyList, m->pBlock);
+    //Update NextTask
+    NextTask = getFirstRL();
+    
+    //Freeing the memory space of the old message
+    free(m);
+
+    //Switch context
+    if ( NextTask == PreviousTask )
     {
-      //receiving tasks waiting
-      msg* m = pop_mailbox_head(mBox);
-      //copy senders data into reciver
-      
-      memcpy(m->pData,pData,mBox->nDataSize);
-      
-      PreviousTask = getFirstRL();
-      remove_from_list( WaitingList, m->pBlock); //move task
-      sorted_insert( ReadyList, m->pBlock);
-      free(m); //delete old msg
-      NextTask = getFirstRL();
-      SwitchContext();
+      isr_on();
     }
     else
     {
-      msg* newM = (msg *)calloc(1,sizeof(msg));
-      newM->pData = calloc(mBox->nDataSize,sizeof(char));
-      memcpy(newM->pData,pData,mBox->nDataSize);
-      if(mBox->nMessages == mBox->nMaxMessages)//Box is full
-      {
-        msg* oldM = pop_mailbox_head(mBox);
-        free(oldM);
-      }
-      push_mailbox_tail(mBox,newM);
+      SwitchContext();
     }
-    
+  }
+  else
+  {
+    msg* newM = (msg *)calloc(1,sizeof(msg));
+    if ( newM == NULL ) 
+    {
+      return FAIL;
+    }
+    newM->pData = calloc(mBox->nDataSize,sizeof(char));
+    if ( newM->pData == NULL ) 
+    {
+      return FAIL;
+    }
+    memcpy(newM->pData,pData,mBox->nDataSize);
+    if(mBox->nMessages == mBox->nMaxMessages)//Box is full
+    {
+      msg* oldM = pop_mailbox_head(mBox);
+      free(oldM);
+    }
+    push_mailbox_tail(mBox,newM);
+  }
   return OK;
 }
 
@@ -229,7 +264,7 @@ exception receive_no_wait( mailbox* mBox, void* pData )
 {
   //Disable interrupt
   isr_off();
-  static exception message_received = FAIL;
+  exception message_received = FAIL;
   //IF send Message is waiting THEN
   if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )
   {
@@ -249,15 +284,25 @@ exception receive_no_wait( mailbox* mBox, void* pData )
       sorted_insert(ReadyList, sender->pBlock);
       //Update NextTask
       NextTask = getFirstRL();
-      //Switch context
-      SwitchContext();
     }
     else 
     {
       void* p = realloc(sender->pData, mBox->nDataSize);
       free(p);
+      NextTask = PreviousTask = getFirstRL();
     }
+    
     free(sender);
+    
+    //Switch context
+    if ( PreviousTask == NextTask )
+    {
+      isr_on();
+    }
+    else
+    {
+      SwitchContext();
+    }
   }
   //Return status on received message
   return message_received;
