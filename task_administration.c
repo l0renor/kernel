@@ -20,6 +20,9 @@ int init_kernel( void )
 
 exception create_task( void(* body)(), uint d )
 {
+  if ( body == NULL || d <= ticks()){
+    return FAIL;
+  } 
   //Allocate memory for TCB
   isr_off(); /* protextion of calloc */
   TCB* pTCB = (TCB *)calloc(1,sizeof(TCB));

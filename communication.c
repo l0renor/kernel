@@ -1,7 +1,7 @@
 // Communication
 
 mailbox* create_mailbox( uint nMessages, uint nDataSize)
-{
+{ 
   isr_off(); /* protection of calloc */
   mailbox *result = (mailbox*)calloc(1,sizeof(mailbox));
   isr_on();
@@ -20,6 +20,11 @@ mailbox* create_mailbox( uint nMessages, uint nDataSize)
 
 exception remove_mailbox( mailbox* mBox )
 {
+  if ( mBox == NULL )
+  {
+    return NOT_EMPTY;
+  }
+  
   //IF Mailbox is empty THEN
   if ( mBox->nMessages == 0 )
   {
@@ -37,6 +42,10 @@ exception remove_mailbox( mailbox* mBox )
 
 exception send_wait( mailbox* mBox, void* pData )
 {
+  if ( mBox == NULL ||pData == NULL)
+  {
+    return DEADLINE_REACHED;
+  }
   //Disable interrupts
   isr_off();
   //Update PreviousTask
@@ -141,6 +150,10 @@ exception send_wait( mailbox* mBox, void* pData )
 
 exception receive_wait( mailbox* mBox, void* pData )
 {
+  if ( mBox == NULL ||pData == NULL)
+  {
+    return DEADLINE_REACHED;
+  }
   //Disable interrupt
   isr_off();
   //Update PreviousTask
@@ -256,6 +269,10 @@ exception receive_wait( mailbox* mBox, void* pData )
 
 exception send_no_wait( mailbox* mBox, void* pData )
 {
+  if ( mBox == NULL ||pData == NULL)
+  {
+    return DEADLINE_REACHED;
+  }
   //Disable interrupt
   isr_off();
   //Update PreviousTask
@@ -328,6 +345,10 @@ exception send_no_wait( mailbox* mBox, void* pData )
 
 exception receive_no_wait( mailbox* mBox, void* pData )
 {
+  if ( mBox == NULL ||pData == NULL)
+  {
+    return DEADLINE_REACHED;
+  }
   exception message_received = FAIL;
   //IF send Message is waiting THEN
   if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )

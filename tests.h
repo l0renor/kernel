@@ -52,3 +52,6 @@ void test_mass_msg();
 void test_mass_msg_send();
 void test_mass_msg_rcv();
 
+
+void test_bad_arguments();
+
