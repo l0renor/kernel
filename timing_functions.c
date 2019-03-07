@@ -47,24 +47,35 @@ void set_deadline( uint deadline )
 {
   //Disable interrupt
   isr_off();
+  //Update PreviousTask
+  PreviousTask = getFirstRL();
+  
   //Set the deadline field in the calling TCB.
   getFirstRL()->Deadline = deadline;
-  PreviousTask = getFirstRL();
   //Reschedule Readylist
   insertion_sort(ReadyList);
+  
   //Update NextTask
   NextTask = getFirstRL();
+  
   //Switch context
-  SwitchContext();
+  if ( PreviousTask == NextTask )
+  {
+    isr_on();
+  }
+  else 
+  {
+    SwitchContext();
+  }
 }
 
 void TimerInt( void )
 {
-  
-  
   Ticks++;
+  //Update PreviousTask
   PreviousTask = getFirstRL();
-  // check TimerList
+  
+  //Check TimerList
   listobj* current = TimerList->pHead->pNext;
   while ( current->pTask != NULL )
   {
@@ -84,7 +95,7 @@ void TimerInt( void )
     }
   }
   
-  // check WaitingList
+  //Check WaitingList
   current = WaitingList->pHead->pNext;
   while ( current->pTask != NULL )
   {
@@ -106,6 +117,8 @@ void TimerInt( void )
       current = current->pNext;
     }
   }
+  
+  //Update NextTask
   NextTask = getFirstRL();
 }
 
