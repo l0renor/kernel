@@ -17,8 +17,11 @@ void test_terminate();
 
 // Communication Tests
 
-void test_create_mailbox();
-void test_remove_mailbox();
+
+void test_create_remove_mailbox();
+void test_create_remove_mailbox_task();
+void test_create_remove_mailbox_task2();
+
 void stage_one_test_case();
 void stage_one_test_case_task_one();
 void stage_one_test_case_task_two();
@@ -38,3 +41,14 @@ void test_2_messaging_exceptionsRcv();
 
 void test_messaging_exceptions_snd_nW();
 void test_1_messaging_exceptions_snd_nW();
+
+void test_messaging_exceptions_full_sw();
+void test_1_messaging_exceptions_full_sw();
+void test_2_messaging_exceptions_full_sw();
+void test_3_messaging_exceptions_full_sw();
+void test_4_messaging_exceptions_full_sw();
+
+void test_mass_msg();
+void test_mass_msg_send();
+void test_mass_msg_rcv();
+

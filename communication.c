@@ -46,7 +46,7 @@ exception send_wait( mailbox* mBox, void* pData )
   {
     //Remove receiving task's Message struct from the Mailbox
     msg* receiver = pop_mailbox_head(mBox);
-	//Change mailbox stats
+    //Change mailbox stats
     mBox->nMessages--;
     mBox->nBlockedMsg++;
     //Copy sender's data to the data area of the receivers Message
@@ -59,14 +59,19 @@ exception send_wait( mailbox* mBox, void* pData )
   }
   else
   {
-    //Allocate a Message structure
-    msg* message = ( msg * ) calloc( 1, sizeof( msg ) );
-    if ( message == NULL )
-	{
+    //IF Deadline is already reached 
+    if ( deadline() <= ticks() ) 
+    {
       return DEADLINE_REACHED;
     }
-    //Set data pointer
-    message->pData = pData;
+    //Allocate a Message structure +  Set data pointer   
+    msg* message =  create_message(pData,0);
+    if ( message == NULL )
+    {
+      return DEADLINE_REACHED;
+    }
+   
+    
     //Get listobj of current task    
     listobj* waiter = ReadyList->pHead->pNext;
     //Set blocked listobj pointer and other way round
@@ -82,12 +87,12 @@ exception send_wait( mailbox* mBox, void* pData )
     {
       //Pop first mailbox message
       msg* head = pop_mailbox_head(mBox);
-	  //Set nTCnt to 1 as flag
-	  head->pBlock->nTCnt = 1;
-	  //Put its task back in ReadyList
+      //Set nTCnt to 1 as flag
+      head->pBlock->nTCnt = 1;
+      //Put its task back in ReadyList
       remove_from_list(WaitingList, head->pBlock);
       sorted_insert(ReadyList, head->pBlock);
-	  //Free memory
+      //Free memory
       free(head);
     }
     else
@@ -114,18 +119,18 @@ exception send_wait( mailbox* mBox, void* pData )
   //IF deadline was reached
   if ( deadline() <= ticks() )
   {
-	//Disable interrupt
+    //Disable interrupt
     isr_off();
-	//Remove receive Message
+    //Remove receive Message
     remove_running_task_from_mailbox(mBox);
-	//Enable interrupt
+    //Enable interrupt
     isr_on();
     return DEADLINE_REACHED;
   }
   //ELSE IF message was thrown out of full mailbox
   else if ( ReadyList->pHead->pNext->nTCnt == 1 ) 
   {
-	ReadyList->pHead->pNext->nTCnt = 0;
+    ReadyList->pHead->pNext->nTCnt = 0;
     return DEADLINE_REACHED;
   }
   else
@@ -171,17 +176,20 @@ exception receive_wait( mailbox* mBox, void* pData )
   }
   else
   { 
-    //Allocate a Message structure
-    msg* message = ( msg* ) calloc( 1, sizeof( msg ) );
-    if( message == NULL )
-	{
+     if ( deadline() <= ticks() ) 
+    {
       return DEADLINE_REACHED;
     }
-	//Set data pointer
-    message->pData = pData;
-	//Get listobj of current task    
+    //Allocate a Message structure +  Set data pointer   
+    msg* message =  create_message(pData,0);
+    if( message == NULL )
+    {
+      return DEADLINE_REACHED;
+    }
+    //Set data pointer
+    //Get listobj of current task    
     listobj* waiter = ReadyList->pHead->pNext;
-	//Set blocked listobj pointer and other way round
+    //Set blocked listobj pointer and other way round
     message->pBlock = waiter;
     waiter->pMessage = message;
     //Add Message to the Mailbox
@@ -194,12 +202,12 @@ exception receive_wait( mailbox* mBox, void* pData )
     {
       //Pop first mailbox message
       msg* head = pop_mailbox_head(mBox);
-	  //Set nTCnt to 1 as flag
-	  head->pBlock->nTCnt = 1;
-	  //Put its task back in ReadyList
+      //Set nTCnt to 1 as flag
+      head->pBlock->nTCnt = 1;
+      //Put its task back in ReadyList
       remove_from_list(WaitingList, head->pBlock);
       sorted_insert(ReadyList, head->pBlock);
-	  //Free memory
+      //Free memory
       free(head);
     }
     else
@@ -207,7 +215,7 @@ exception receive_wait( mailbox* mBox, void* pData )
       //Change the mailbox stats
       mBox->nMessages++;
       mBox->nBlockedMsg--;
-	}
+    }
   }
   
   //Update NextTask
@@ -237,7 +245,7 @@ exception receive_wait( mailbox* mBox, void* pData )
   //ELSE IF message was thrown out of full mailbox
   else if ( ReadyList->pHead->pNext->nTCnt == 1 ) 
   {
-	ReadyList->pHead->pNext->nTCnt = 0;
+    ReadyList->pHead->pNext->nTCnt = 0;
     return DEADLINE_REACHED;
   }
   else
@@ -268,9 +276,9 @@ exception send_no_wait( mailbox* mBox, void* pData )
     //Free receivers memory
     free(receiver);
     
-	//Update NextTask
+    //Update NextTask
     NextTask = getFirstRL();
-	
+    
     //Switch context
     if ( NextTask == PreviousTask )
     {
@@ -283,36 +291,36 @@ exception send_no_wait( mailbox* mBox, void* pData )
   }
   else
   {	
-    //Allocate a Message structure
-    msg* message = ( msg * ) calloc( 1, sizeof( msg ) );
+    //Allocate a Message structure +  Set data pointer   
+    msg* message =  create_message(NULL,0);
     if ( message == NULL )
-	{
+    {
       return FAIL;
     }
-	//Allocate memory for the data
+    //Allocate memory for the data
     message->pData = calloc( mBox->nDataSize, sizeof( char ) );
     if ( message->pData == NULL ) 
     {
       return FAIL;
     }
-	//Copy sender's data to the data area of the sender Message
+    //Copy sender's data to the data area of the sender Message
     memcpy(message->pData, pData, mBox->nDataSize);
-	//Add Message to the mailbox
+    //Add Message to the mailbox
     push_mailbox_tail(mBox, message);
-	//IF Mailbox is full
-	if ( mBox->nMessages == mBox->nMaxMessages )
+    //IF Mailbox is full
+    if ( mBox->nMessages == mBox->nMaxMessages )
     {
       //Pop first mailbox message
       msg* head = pop_mailbox_head(mBox);
-	  //Free memory
+      //Free memory
       free(head);
     }
-	else
-	{
-	  //Change mailbox stats
+    else
+    {
+      //Change mailbox stats
       mBox->nMessages++;
-	}
-	//Enable interrupts
+    }
+    //Enable interrupts
     isr_on();
   }
   return OK;
@@ -324,15 +332,15 @@ exception receive_no_wait( mailbox* mBox, void* pData )
   //IF send Message is waiting THEN
   if ( mBox->nMessages > 0 && mBox->nBlockedMsg >= 0 )
   {
-	//Disable interrupt
+    //Disable interrupt
     isr_off();
-	
+    
     message_received = OK;
-	//Update PreviousTask
+    //Update PreviousTask
     PreviousTask = getFirstRL();
-	//Remove sending task's Message struct from the Mailbox
+    //Remove sending task's Message struct from the Mailbox
     msg* sender = pop_mailbox_head(mBox);
-	//Change mailbox stats
+    //Change mailbox stats
     mBox->nMessages--;
     if (mBox->nBlockedMsg > 0) 
     {
@@ -355,9 +363,9 @@ exception receive_no_wait( mailbox* mBox, void* pData )
     }
     //Free senders memory
     free(sender);
-	
-	//Update NextTask
-	NextTask = getFirstRL();
+    
+    //Update NextTask
+    NextTask = getFirstRL();
     
     //Switch context
     if ( PreviousTask == NextTask )

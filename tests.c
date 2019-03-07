@@ -1,4 +1,6 @@
 #include "tests.h"
+#include <string.h>
+
 //Global mailboxes 
 mailbox* mailBoxes[10];
 //General Wrapper for all test which also have to be tasks and need noo special pre-executive operations.
@@ -99,6 +101,31 @@ void stage_one_test_case_task_two()
   assert(*data == 6);
   *data = 7;
   exception returncode = send_wait(mailBoxes[0],data);
+  terminate();
+}
+
+void test_create_remove_mailbox(){
+  init_kernel();
+  create_task(test_create_remove_mailbox_task,200);
+  create_task(test_create_remove_mailbox_task2,500);
+  mailBoxes[0]  = create_mailbox(5, sizeof(int));//wait mailbox
+  mailBoxes[1]  = create_mailbox(5, sizeof(int));//no wait mailbox
+  run();
+
+}
+void test_create_remove_mailbox_task(){
+  int* data = (int*) malloc(sizeof(int));
+  *data = 5;
+  assert(remove_mailbox(mailBoxes[0])==OK);
+  assert(send_wait(mailBoxes[1],data)== OK);
+  terminate();
+}
+void test_create_remove_mailbox_task2(){
+  int* data = (int*) malloc(sizeof(int));
+  assert(remove_mailbox(mailBoxes[1])==NOT_EMPTY);
+  assert(receive_no_wait(mailBoxes[1],data) == OK);
+  assert(*data == 5);
+  assert(remove_mailbox(mailBoxes[1])==OK);
   terminate();
 }
 
@@ -340,6 +367,113 @@ void test_1_messaging_exceptions_snd_nW(){
   
 
 
+}
+
+void test_messaging_exceptions_full_sw()
+{
+  init_kernel();
+  create_task(test_1_messaging_exceptions_full_sw,1000);
+  create_task(test_2_messaging_exceptions_full_sw,1000);
+  create_task(test_3_messaging_exceptions_full_sw,1000);
+  create_task(test_4_messaging_exceptions_full_sw,1000);
+  mailBoxes[0] = create_mailbox(3, sizeof(int)); //size 3 mBox
+  run();
+}
+
+void test_1_messaging_exceptions_full_sw()
+{
+  int* data = (int*) malloc(sizeof(int));
+  *data = 1;
+  assert(mailBoxes[0]->nBlockedMsg == 0);
+  assert(mailBoxes[0]->nMessages == 0);
+  exception result = send_wait(mailBoxes[0],data);
+  //this task wakes up because his message was thrown out
+  assert(result == FAIL);//this message was thrown out 
+  assert(mailBoxes[0]->nBlockedMsg == 3);
+  assert(mailBoxes[0]->nMessages == 3);
+  receive_no_wait(mailBoxes[0],data);
+  assert(mailBoxes[0]->nBlockedMsg == 2);
+  assert(mailBoxes[0]->nMessages == 2);
+  assert(*data==2);
+  terminate();
+}
+
+void test_2_messaging_exceptions_full_sw()
+{
+  int* data = (int*) malloc(sizeof(int));
+  *data = 2;
+  assert(mailBoxes[0]->nBlockedMsg == 1);
+  assert(mailBoxes[0]->nMessages == 1);
+  exception result = send_wait(mailBoxes[0],data);
+  //this task wakes up because his message was recived
+  assert(result == OK);
+  assert(mailBoxes[0]->nBlockedMsg == 2);
+  assert(mailBoxes[0]->nMessages == 2);
+  assert(receive_wait(mailBoxes[0],data)==OK);
+  assert(mailBoxes[0]->nBlockedMsg == 1);
+  assert(mailBoxes[0]->nMessages == 1);
+  assert(*data==3);
+  terminate();
+}
+
+void test_3_messaging_exceptions_full_sw()
+{
+  assert(mailBoxes[0]->nBlockedMsg == 2);
+  assert(mailBoxes[0]->nMessages == 2);
+  int* data = (int*) malloc(sizeof(int));
+  *data = 3;
+  exception result = send_wait(mailBoxes[0],data);
+  //this task wakes up because his message was recived
+  assert(result == OK);
+  assert(mailBoxes[0]->nBlockedMsg == 1);
+  assert(mailBoxes[0]->nMessages == 1);
+  assert(receive_wait(mailBoxes[0],data)==OK);
+  assert(mailBoxes[0]->nBlockedMsg == 0);
+  assert(mailBoxes[0]->nMessages == 0);
+  assert(*data==4);
+  terminate();
+  
+}
+
+void test_4_messaging_exceptions_full_sw()
+{
+  assert(mailBoxes[0]->nBlockedMsg == 3);
+  assert(mailBoxes[0]->nMessages == 3);
+  int* data = (int*) malloc(sizeof(int));
+  *data = 4;
+  exception result = send_wait(mailBoxes[0],data);
+  assert(mailBoxes[0]->nBlockedMsg == 0);
+  assert(mailBoxes[0]->nMessages == 0);
+  terminate();
+}
+
+void test_mass_msg(){
+  init_kernel();
+  create_task(test_mass_msg_send,10);
+  create_task(test_mass_msg_rcv,15);
+  mailBoxes[0] = create_mailbox(1, 592*sizeof(char)); //size 1 mBox for text stringlengh + 1
+  run();
+
+}
+
+void test_mass_msg_send(){
+  char *data = (char*) malloc(592*sizeof(char)); //stringlengh + 1
+  strcpy(data, "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.");
+  while(1){
+  exception result = send_wait(mailBoxes[0],data);
+  assert(result == OK);
+  }
+
+}
+
+void test_mass_msg_rcv(){
+  char *data = (char*) malloc(592*sizeof(char)); //stringlengh + 1
+  while(1){
+  strcpy(data, "Not Lorem ipsum");  
+  exception result = receive_no_wait(mailBoxes[0],data);
+  assert(result == OK);
+  assert(strcmp(data, "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.") == 0);
+  }
 }
 
 
