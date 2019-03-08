@@ -53,5 +53,13 @@ void test_mass_msg_send();
 void test_mass_msg_rcv();
 
 
-void test_bad_arguments();
+void test_infinite_tasks_init();
 
+void test_infinite_tasks_running();
+void test_infinite_tasks_running_task();
+
+void test_infinite_tasks_create_terminate();
+void test_infinite_tasks_create_terminate_task_cre();
+void test_infinite_tasks_create_terminate_task_ter();
+
+void test_send_wait_deadlinereached();

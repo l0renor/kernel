@@ -476,7 +476,54 @@ void test_mass_msg_rcv(){
   }
 }
 
-void test_bad_arguments(){
+void test_infinite_tasks_init()
+{
+  init_kernel();
+  while (1)
+  {
+    create_task(idle_function,100);
+  }
+}
+
+void test_infinite_tasks_running(){
+  
+  init_kernel();
+  assert(OK == create_task(test_infinite_tasks_running_task,100));
+  run();
+
+}
+
+void test_infinite_tasks_running_task()
+{
+  while (1)
+  {
+    create_task(idle_function,100);
+  }
+  terminate();
+}
+
+
+void test_infinite_tasks_create_terminate()
+{
+  init_kernel();
+  assert(OK == create_task(test_infinite_tasks_create_terminate_task_cre,2000));//high DL
+  run(); 
+}
+void test_infinite_tasks_create_terminate_task_cre()
+{
+  while(1)
+  {
+    create_task(test_infinite_tasks_create_terminate_task_ter,100); // low DL
+  }
+  terminate();  
+}
+
+void test_infinite_tasks_create_terminate_task_ter()
+{
+  terminate();
+}
+ 
+test_send_wait_deadlinereached(){
 
 
 }

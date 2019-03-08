@@ -1,5 +1,10 @@
 exception wait( uint nTicks )
 {
+  //IF DL already reached no need to sleep
+  if ( deadline() - ticks() <= 0 )
+  {
+    return DEADLINE_REACHED;
+  }
   isr_off();
   exception status;
   //Update PreviousTask
