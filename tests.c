@@ -523,9 +523,30 @@ void test_infinite_tasks_create_terminate_task_ter()
   terminate();
 }
  
-test_send_wait_deadlinereached(){
+void test_send_wait_deadlinereached()
+{
+init_kernel();
+  mailBoxes[0] = create_mailbox(1, sizeof(int));
+  assert(OK == create_task(test_send_wait_deadlinereached_task_send,100));
+  assert(OK == create_task(test_send_wait_deadlinereached_task_rcv,10000));
+  run();
+}
 
+void test_send_wait_deadlinereached_task_send{
+  
+  int* data = (int*) malloc(sizeof(int));
+  *data = 6;
+  assert(DEADLINE_REACHED == send_wait(mailBoxes[0],data);
+  terminate();
 
+}
+void test_send_wait_deadlinereached_task_rcv(){
+  wait(101);//DL of send task reached 
+  int* data = (int*) malloc(sizeof(int));
+  *data = 6;
+  exception result = receive_no_wait(mailBoxes[0],data);
+  assert(result == FAIL);
+  terminate();
 }
 
 
