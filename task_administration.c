@@ -4,6 +4,10 @@
 
 int init_kernel( void )
 {
+  if ( KernelMode == RUNNING ) 
+  {
+    return FAIL;
+  }
   //Set tick counter to zero
   Ticks = 0;
   
@@ -35,8 +39,8 @@ int init_kernel( void )
 
 exception create_task( void(* body)(), uint d )
 {
-
-  if ( body == NULL || d <= ticks()){
+  if ( body == NULL || d <= ticks() )
+  {
     return FAIL;
   } 
 
@@ -44,8 +48,9 @@ exception create_task( void(* body)(), uint d )
   isr_off();
 
   //Allocate memory for TCB
-  TCB* pTCB = (TCB *)calloc(1,sizeof(TCB));
-  if ( pTCB == NULL ) {
+  TCB* pTCB = (TCB *) calloc( 1, sizeof( TCB ) );
+  if ( pTCB == NULL )
+  {
     return FAIL;
   }
   
