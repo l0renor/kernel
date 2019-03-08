@@ -1,6 +1,6 @@
 exception wait( uint nTicks )
 {
-  //IF DL already reached no need to sleep
+  //IF deadline already reached no need to sleep
   if ( deadline() - ticks() <= 0 )
   {
     return DEADLINE_REACHED;
@@ -109,12 +109,7 @@ void TimerInt( void )
     {
       listobj* toMove = current;
       current = toMove->pNext;
-      remove_from_list(WaitingList, toMove);      
-      //      msg* previous = current->pMessage->pPrevious;
-      //      msg* next = current->pMessage->pNext;
-      //      next->pPrevious = previous;
-      //      previous->pNext = next;
-      //      free(current->pMessage);
+      remove_from_list(WaitingList, toMove);
       sorted_insert(ReadyList, toMove);
     }
     else

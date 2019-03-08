@@ -125,6 +125,9 @@ exception send_wait( mailbox* mBox, void* pData )
     SwitchContext();
   }
   
+  //Set Message pointer to NULL again
+  getFirstRL()->pMessage = NULL;
+  
   //IF deadline was reached
   if ( deadline() <= ticks() )
   {
@@ -243,6 +246,9 @@ exception receive_wait( mailbox* mBox, void* pData )
   {
     SwitchContext();
   }
+  
+  //Set Message pointer to NULL again
+  getFirstRL()->pMessage = NULL;
   
   //IF deadline was reached
   if ( deadline() <= ticks() )
