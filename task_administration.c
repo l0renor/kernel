@@ -126,6 +126,10 @@ void terminate()
 
 void run( void ) 
 {
+  if ( KernelMode == RUNNING )
+  {
+    return;
+  }
   //Update NextTask
   NextTask = getFirstRL();
   //Set kernel mode
