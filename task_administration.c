@@ -1,30 +1,49 @@
 #include <limits.h>
+
 // Task administration
 
 int init_kernel( void )
 {
+  //Set tick counter to zero
   Ticks = 0;
+  
+  //Create necessary data structures
   ReadyList = create_list();
   WaitingList = create_list();
   TimerList = create_list();
-  if(TimerList == NULL || ReadyList == NULL || WaitingList == NULL){
+  if ( TimerList == NULL || ReadyList == NULL || WaitingList == NULL)
+  {
     free(TimerList);
     free(ReadyList);
     free(WaitingList);
     return FAIL;
   }
-  create_task(idle_function,UINT_MAX);
+  
+  //Create an idle task
+  if ( create_task(idle_function, UINT_MAX) == FAIL ) 
+  {
+    free(TimerList);
+    free(ReadyList);
+    free(WaitingList);
+    return FAIL;
+  }
+  
+  //Set the kernel in INIT mode
   KernelMode = INIT;
   return OK;
 }
 
 exception create_task( void(* body)(), uint d )
 {
+
   if ( body == NULL || d <= ticks()){
     return FAIL;
   } 
+
+  //Disable interrupts (to protect calloc)
+  isr_off();
+
   //Allocate memory for TCB
-  isr_off(); /* protextion of calloc */
   TCB* pTCB = (TCB *)calloc(1,sizeof(TCB));
   if ( pTCB == NULL ) {
     return FAIL;
@@ -44,40 +63,38 @@ exception create_task( void(* body)(), uint d )
   //Skip some Stack elements for r12, r3, r2, r1, r0.
   pTCB->SP = &( pTCB->StackSeg[STACK_SIZE-9] );
   
+  //Create ListObj for TCB
+  listobj* o = create_listobj(pTCB);
+  if ( o == NULL )
+  {
+    free(pTCB);
+    return FAIL;
+  }
+  
   //IF start-up mode THEN
   if (KernelMode == INIT)
   {
-    
-    //Create ListObj for TCB
-    listobj* o = create_listobj(pTCB);
-    if ( o == NULL )
-    {
-      free(pTCB);
-      return FAIL;
-    }
     //Insert new task in Readylist
     sorted_insert(ReadyList, o);
+    isr_on();
   }
   else
   {
-    
-    //Disable interrupts
-    isr_off();
-    //Save context
-    
-    //Create ListObj for TCB
-    listobj* o = create_listobj(pTCB);
-    if ( o == NULL )
-    {
-      free(pTCB);
-      return FAIL;
-    }
-    //Insert new task in Readylist
+    //Update PreviousTask
     PreviousTask = ReadyList->pHead->pNext->pTask;
+    //Insert new task in Readylist
     sorted_insert(ReadyList, o);
+    //Update NextTask
     NextTask = ReadyList->pHead->pNext->pTask;
-    SwitchContext();
-    
+    //Switch context
+    if ( PreviousTask == NextTask )
+    {
+      isr_on();
+    }
+    else
+    {
+      SwitchContext();
+    }
   }
   //Return status
   return OK;
@@ -85,19 +102,29 @@ exception create_task( void(* body)(), uint d )
 
 void terminate()
 {
+  //Disable interrupts
   isr_off();
+  //Get terminating task
   listobj* leavingObj = ReadyList->pHead->pNext;
-  remove_from_list(ReadyList, ReadyList->pHead->pNext);
+  //Remove terminating task from ReadyList
+  remove_from_list(ReadyList, leavingObj);
+  //Update NextTask
   NextTask = getFirstRL();
+  //Switch to next tasks stack
   switch_to_stack_of_next_task();
+  //Free memory
   free(leavingObj->pTask);
   free(leavingObj);
+  //Load context
   LoadContext_In_Terminate();
 }
 
 void run( void ) 
 {
+  //Update NextTask
   NextTask = getFirstRL();
+  //Set kernel mode
   KernelMode = RUNNING;
+  //LoadContext
   LoadContext_In_Run();  
 }
