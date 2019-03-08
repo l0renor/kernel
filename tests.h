@@ -63,3 +63,6 @@ void test_infinite_tasks_create_terminate_task_cre();
 void test_infinite_tasks_create_terminate_task_ter();
 
 void test_send_wait_deadlinereached();
+void test_send_wait_deadlinereached_task_send();
+void test_send_wait_deadlinereached_task_rcv();
+

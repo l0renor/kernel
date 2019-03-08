@@ -479,27 +479,36 @@ void test_mass_msg_rcv(){
 void test_infinite_tasks_init()
 {
   init_kernel();
-  while (1)
+  exception res = OK;
+  int i = 0;
+  while (res)
   {
-    create_task(idle_function,100);
+    res = create_task(idle_function,100);
+    i++;
   }
+  //memmory full
+  char *data = (char*) malloc(2*sizeof(char));
+  assert(data == NULL);
 }
 
 void test_infinite_tasks_running(){
   
   init_kernel();
-  assert(OK == create_task(test_infinite_tasks_running_task,100));
+  assert(OK == create_task(test_infinite_tasks_running_task,1000));
   run();
 
 }
 
 void test_infinite_tasks_running_task()
 {
-  while (1)
+  exception res = OK;
+  while (res)
   {
-    create_task(idle_function,100);
+    res = create_task(idle_function,1000000);
   }
-  terminate();
+  //memmory full
+  char *data = (char*) malloc(80*sizeof(char));
+  assert(data == NULL);
 }
 
 
@@ -514,8 +523,7 @@ void test_infinite_tasks_create_terminate_task_cre()
   while(1)
   {
     create_task(test_infinite_tasks_create_terminate_task_ter,100); // low DL
-  }
-  terminate();  
+  }  
 }
 
 void test_infinite_tasks_create_terminate_task_ter()
@@ -523,9 +531,31 @@ void test_infinite_tasks_create_terminate_task_ter()
   terminate();
 }
  
-test_send_wait_deadlinereached(){
+void test_send_wait_deadlinereached()
+{
+init_kernel();
+  mailBoxes[0] = create_mailbox(1, sizeof(int));
+  assert(OK == create_task(test_send_wait_deadlinereached_task_send,100));
+  assert(OK == create_task(test_send_wait_deadlinereached_task_rcv,10000));
+  run();
+}
 
+void test_send_wait_deadlinereached_task_send()
+{
+  
+  int* data = (int*) malloc(sizeof(int));
+  *data = 6;
+  assert(DEADLINE_REACHED == send_wait(mailBoxes[0],data));
+  terminate();
 
+}
+void test_send_wait_deadlinereached_task_rcv(){
+  wait(101);//DL of send task reached 
+  int* data = (int*) malloc(sizeof(int));
+  *data = 6;
+  exception result = receive_no_wait(mailBoxes[0],data);
+  assert(result == FAIL);
+  terminate();
 }
 
 

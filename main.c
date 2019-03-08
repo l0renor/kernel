@@ -1,3 +1,4 @@
+
 #include "system_sam3x.h"
 #include "at91sam3x8.h"
 
@@ -14,10 +15,10 @@ void main(void)
   //init_kernel();
   
   // Code here
-  test_mass_msg();
+  test_infinite_tasks_running();
   
   
   // Code end
   
-  //run();
+  run();
 }
