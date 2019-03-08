@@ -19,15 +19,15 @@ exception wait( uint nTicks )
   //Switch context
   SwitchContext();
   
+  //Check status
   if ( deadline() - ticks() <= 0 )
   {
-    status = DEADLINE_REACHED;
+    return DEADLINE_REACHED;
   }
   else
   {
-    status = OK;
+    return OK;
   }
-  return status;
 }
 
 void set_ticks( uint nTicks )
