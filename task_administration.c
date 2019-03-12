@@ -86,11 +86,11 @@ exception create_task( void(* body)(), uint d )
   else
   {
     //Update PreviousTask
-    PreviousTask = ReadyList->pHead->pNext->pTask;
+    PreviousTask = getFirstRL();
     //Insert new task in Readylist
     sorted_insert(ReadyList, o);
     //Update NextTask
-    NextTask = ReadyList->pHead->pNext->pTask;
+    NextTask = getFirstRL();
     //Switch context
     if ( PreviousTask == NextTask )
     {
