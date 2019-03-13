@@ -552,7 +552,6 @@ void test_send_wait_deadlinereached_task_send()
 void test_send_wait_deadlinereached_task_rcv(){
   wait(101);//DL of send task reached 
   int* data = (int*) malloc(sizeof(int));
-  *data = 6;
   exception result = receive_no_wait(mailBoxes[0],data);
   assert(result == FAIL);
   terminate();

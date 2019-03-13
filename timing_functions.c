@@ -6,7 +6,6 @@ exception wait( uint nTicks )
     return DEADLINE_REACHED;
   }
   isr_off();
-  exception status;
   //Update PreviousTask
   PreviousTask = getFirstRL();
   //Place RunningTask in the TimerList

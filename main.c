@@ -15,7 +15,7 @@ void main(void)
   //init_kernel();
   
   // Code here
-  test_infinite_tasks_running();
+  test_send_wait_deadlinereached();
   
   
   // Code end

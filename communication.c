@@ -126,7 +126,7 @@ exception send_wait( mailbox* mBox, void* pData )
   }
   
   //Set Message pointer to NULL again
-  getFirstRL()->pMessage = NULL;
+  ReadyList->pHead->pNext->pMessage = NULL;
   
   //IF deadline was reached
   if ( deadline() <= ticks() )
@@ -134,7 +134,10 @@ exception send_wait( mailbox* mBox, void* pData )
     //Disable interrupt
     isr_off();
     //Remove receive Message
-    remove_running_task_from_mailbox(mBox);
+    remove_running_task_from_mailbox(mBox);    
+    //Change mailbox stats		
+    mBox->nMessages--;
+    mBox->nBlockedMsg--;
     //Enable interrupt
     isr_on();
     return DEADLINE_REACHED;
@@ -248,7 +251,7 @@ exception receive_wait( mailbox* mBox, void* pData )
   }
   
   //Set Message pointer to NULL again
-  getFirstRL()->pMessage = NULL;
+  ReadyList->pHead->pNext->pMessage = NULL;
   
   //IF deadline was reached
   if ( deadline() <= ticks() )
@@ -257,6 +260,9 @@ exception receive_wait( mailbox* mBox, void* pData )
     isr_off();
     //Remove receive Message
     remove_running_task_from_mailbox(mBox);
+    //Change mailbox stats		
+    mBox->nMessages--;
+    mBox->nBlockedMsg++;
     //Enable interrupt
     isr_on();
     return DEADLINE_REACHED;
